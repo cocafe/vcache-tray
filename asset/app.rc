@@ -1,0 +1,6 @@
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+1 					24 				"app.manifest"
+101		              		ICON				"app.ico"
+102		              		ICON				"app_blue.ico"
+103		              		ICON				"app_red.ico"

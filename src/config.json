@@ -1,0 +1,24 @@
+{
+	"settings" : {
+		"default_prefer" : "cache",
+		"restart_service_on_apply" : true,
+		"autosave_on_exit" : false
+	},
+	"profiles" : [
+		{
+			"name" : "Gensh1t",
+			"process" : "Yuanshen.exe",
+			"prefer" : "cache"
+		},
+		{
+			"name" : "TslGame",
+			"process" : "TslGame.exe",
+			"prefer" : "cache"
+		},
+		{
+			"name" : "csgo",
+			"process" : "csgo.exe",
+			"prefer" : "freq"
+		}
+	]
+}
