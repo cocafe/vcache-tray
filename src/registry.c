@@ -141,7 +141,7 @@ subkey_close:
         return 0;
 }
 
-int profiles_registry_clean(void)
+int profiles_registry_delete(void)
 {
         HKEY key_app;
         int err;
@@ -155,22 +155,39 @@ int profiles_registry_clean(void)
         err = RegDeleteTree(key_app, NULL);
         if (err != ERROR_SUCCESS) {
                 pr_err("failed to delete %ls, err = 0x%x\n", REG_KEY_APP, err);
-                goto close;
         }
 
         RegCloseKey(key_app);
+
+        return err;
+}
+
+int profiles_registry_create(void)
+{
+        HKEY key_app;
+        int err;
 
         err = RegCreateKey(HKEY_LOCAL_MACHINE, REG_KEY_APP, &key_app);
         if (err != ERROR_SUCCESS) {
                 pr_err("failed to create %ls, err = 0x%x\n", REG_KEY_APP, err);
-                goto out;
+                return err;
         }
 
-close:
         RegCloseKey(key_app);
 
-out:
-        return err;
+        return ERROR_SUCCESS;
+}
+
+int profiles_registry_clean(void)
+{
+        int err;
+
+        err = profiles_registry_delete();
+        if (err != ERROR_SUCCESS && err != ERROR_FILE_NOT_FOUND) {
+                return err;
+        }
+
+        return profiles_registry_create();
 }
 
 int __profiles_registry_write(struct list_head *head)

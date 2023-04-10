@@ -205,7 +205,7 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
 
         if ((err = default_prefer_registry_read(NULL))) {
                 // TODO: check amd3dv cache process...
-                pr_mb_err("failed to read registry, is amd3dv driver and service installed properly?\n");
+                pr_mb_err("failed to read %ls, are amd3dv driver and service installed properly?\n", REG_KEY_PREFERENCES);
                 goto exit_usrcfg;
         }
 
