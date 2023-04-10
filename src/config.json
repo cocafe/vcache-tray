@@ -11,7 +11,7 @@
 			"prefer" : "cache"
 		},
 		{
-			"name" : "TslGame",
+			"name" : "PUBG",
 			"process" : "TslGame.exe",
 			"prefer" : "cache"
 		},
