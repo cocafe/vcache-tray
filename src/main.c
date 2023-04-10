@@ -200,8 +200,14 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         if ((err = logging_init()))
                 return err;
 
-        if ((usrcfg_init()))
-                pr_err("failed to load user config, create new one\n");
+        if ((err = usrcfg_init())) {
+                if (err == -EINVAL) {
+                        pr_mb_err("invalid JSON config, please check\n");
+                        return err;
+                }
+
+                mb_info("failed to load config, using default configs and registry profiles\n");
+        }
 
         if ((err = default_prefer_registry_read(NULL))) {
                 // TODO: check amd3dv cache process...
