@@ -12,12 +12,22 @@
 
 int amd3dv_service_restart(void)
 {
-        int err;
+        wchar_t *exe = L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+        wchar_t *cmdl = L"-command \"Restart-Service amd3dvcacheSvc -Force\"";
+        wchar_t real_cmdl[PATH_MAX * 2] = { 0 };
+        STARTUPINFO startupinfo = { 0 };
+        PROCESS_INFORMATION procinfo = { 0 };
 
-        if ((err = system("powershell -command \"Restart-Service amd3dvcacheSvc -Force\"")))
-                pr_err("failed to restart amd3dvacheSvc\n");
+        snwprintf(real_cmdl, WCBUF_LEN(real_cmdl), L"\"%ls\" %ls", exe, cmdl);
 
-        return err;
+        if (FALSE == CreateProcess(exe, real_cmdl, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &startupinfo, &procinfo)) {
+                pr_err("execution \"%ls\" failed, err = 0x%08lx\n", real_cmdl, GetLastError());
+                return 1;
+        }
+
+        pr_dbg("done");
+
+        return 0;
 }
 
 int default_prefer_registry_read(uint32_t *ret)
