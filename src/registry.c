@@ -241,7 +241,7 @@ int __profiles_registry_write(struct list_head *head)
                         goto subkey_close;
                 }
 
-                pr_info("\"%ls\\%ls\" with process: \"%ls\" type: %u\n", REG_KEY_APP, p->name, p->process, p->prefer);
+                pr_rawlvl(INFO, "write \"%ls\\%ls\" with process: \"%ls\" type: %u\n", REG_KEY_APP, p->name, p->process, p->prefer);
 
 subkey_close:
                 RegCloseKey(sub_key);
