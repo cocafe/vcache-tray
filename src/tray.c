@@ -181,14 +181,17 @@ void tray_icon_update(void)
         switch (default_prefer) {
         case PREFER_CACHE:
                 g_tray.icon.id = IDI_APP_ICON_BLUE;
+                tray_tooltip_set(&g_tray, L"Prefer Cache");
                 break;
 
         case PREFER_FREQ:
                 g_tray.icon.id = IDI_APP_ICON_RED;
+                tray_tooltip_set(&g_tray, L"Prefer Frequency");
                 break;
 
         default:
                 g_tray.icon.id = IDI_APP_ICON;
+                tray_tooltip_set(&g_tray, L"V-Cache Tray");
                 break;
         }
 }
@@ -197,8 +200,11 @@ int vcache_tray_init(HINSTANCE ins)
 {
         int err;
 
-        tray_icon_update();
         err = tray_init(&g_tray, ins);
+        if (!err) {
+                tray_icon_update();
+                tray_update_post(&g_tray);
+        }
 
         return err;
 }
