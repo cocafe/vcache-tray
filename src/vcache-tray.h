@@ -7,6 +7,7 @@
 extern char json_path[PATH_MAX];
 extern uint32_t default_prefer;
 extern uint32_t restart_svc;
+extern uint32_t restart_svc_force;
 extern uint32_t autosave;
 extern jbuf_t jbuf_usrcfg;
 extern struct list_head profiles;

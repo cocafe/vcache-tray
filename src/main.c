@@ -27,6 +27,7 @@ extern BOOL SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT value);
 char json_path[PATH_MAX] = DEFAULT_JSON_PATH;
 uint32_t default_prefer = PREFER_CACHE;
 uint32_t restart_svc = 0;
+uint32_t restart_svc_force = 0;
 uint32_t autosave = 0;
 LIST_HEAD(profiles);
 LIST_HEAD(profiles_reg);
@@ -52,6 +53,7 @@ static int usrcfg_root_key_create(jbuf_t *b)
                 {
                         jbuf_strval_add(b, "default_prefer", &default_prefer, str_prefer, sizeof(str_prefer));
                         jbuf_bool_add(b, "restart_service_on_apply", &restart_svc);
+                        jbuf_bool_add(b, "restart_service_force", &restart_svc_force);
                         jbuf_bool_add(b, "autosave_on_exit", &autosave);
                 }
 

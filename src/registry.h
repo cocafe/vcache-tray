@@ -17,6 +17,8 @@ enum {
         INVALID_PREFER_TYPE,
 };
 
+int amd3dv_service_restart(void);
+
 int default_prefer_registry_read(uint32_t *ret);
 int __default_prefer_registry_write(uint32_t val);
 int default_prefer_registry_write(uint32_t val);

@@ -12,13 +12,14 @@
 
 int amd3dv_service_restart(void)
 {
-        wchar_t *exe = L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
-        wchar_t *cmdl = L"-command \"Restart-Service amd3dvcacheSvc -Force\"";
+        wchar_t force_flag[] = L"-Force";
+        wchar_t exe[] = L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+        wchar_t cmdl[] = L"-command \"Restart-Service amd3dvcacheSvc\"";
         wchar_t real_cmdl[PATH_MAX * 2] = { 0 };
         STARTUPINFO startupinfo = { 0 };
         PROCESS_INFORMATION procinfo = { 0 };
 
-        snwprintf(real_cmdl, WCBUF_LEN(real_cmdl), L"\"%ls\" %ls", exe, cmdl);
+        snwprintf(real_cmdl, WCBUF_LEN(real_cmdl), L"\"%ls\" %ls %ls", exe, cmdl, restart_svc_force ? force_flag : L"");
 
         if (FALSE == CreateProcess(exe, real_cmdl, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &startupinfo, &procinfo)) {
                 pr_err("execution \"%ls\" failed, err = 0x%08lx\n", real_cmdl, GetLastError());

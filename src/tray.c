@@ -120,6 +120,12 @@ static void tray_exit_click(struct tray_menu *m)
         PostQuitMessage(0);
 }
 
+static void tray_restart_svc_click(struct tray_menu *m)
+{
+        if (amd3dv_service_restart())
+                mb_err("failed to restart AMD 3D V-CACHE service");
+}
+
 static struct tray g_tray = {
         .icon = {
                 .path = NULL,
@@ -156,7 +162,10 @@ static struct tray g_tray = {
                 {
                         .name = L"Settings",
                         .submenu = (struct tray_menu[]) {
+                                { .name = L"Restart Service Now", .on_click = tray_restart_svc_click },
+                                { .is_separator = 1 },
                                 { .name = L"Restart AMD3DV Service on Apply", .pre_show = tray_bool_item_update, .on_click = tray_bool_item_click, .userdata=&restart_svc },
+                                { .name = L"Restart Service Forcefully", .pre_show = tray_bool_item_update, .on_click = tray_bool_item_click, .userdata=&restart_svc_force },
                                 { .name = L"Auto Save on Exit", .pre_show = tray_bool_item_update, .on_click = tray_bool_item_click, .userdata=&autosave },
                                 { .is_end = 1 },
                         },
