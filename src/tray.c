@@ -6,6 +6,7 @@
 #include <resource.h>
 
 #include "registry.h"
+#include "profile.h"
 #include "vcache-tray.h"
 
 static void tray_icon_update(void);
@@ -115,6 +116,11 @@ static void tray_save_click(struct tray_menu *m)
                 pr_mb_err("failed to save config, err = %d\n", err);
 }
 
+static void tray_profile_click(struct tray_menu *m)
+{
+        profile_gui_show();
+}
+
 static void tray_exit_click(struct tray_menu *m)
 {
         PostQuitMessage(0);
@@ -126,7 +132,13 @@ static void tray_restart_svc_click(struct tray_menu *m)
                 mb_err("failed to restart AMD 3D V-CACHE service");
 }
 
+static void tray_double_click(struct tray *tray, void *userdata)
+{
+        profile_gui_show();
+}
+
 static struct tray g_tray = {
+        .lbtn_dblclick = tray_double_click,
         .icon = {
                 .path = NULL,
                 .id = IDI_APP_ICON,
@@ -141,7 +153,7 @@ static struct tray g_tray = {
                         },
                 },
                 { .is_separator = 1 },
-                { .name = L"Profiles" },
+                { .name = L"Profiles", .on_click = tray_profile_click, },
                 { .name = L"Save", .on_click = tray_save_click },
                 { .is_separator = 1 },
                 {

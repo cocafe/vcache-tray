@@ -43,6 +43,7 @@ set(SOURCE_FILES
     src/registry.h
     src/registry.c
     src/profile.h
+    src/profile.c
     )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCE_FILES})

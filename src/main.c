@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 #include <windows.h>
+#include <processthreadsapi.h>
+#include <tlhelp32.h>
 
 #include <libjj/utils.h>
 #include <libjj/opts.h>
@@ -22,7 +25,8 @@ static const char *str_prefer[] = {
         [PREFER_FREQ] = "freq"
 };
 
-extern BOOL SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT value);
+extern HANDLE process_snapshot_create(void);
+extern int process_snapshot_iterate(HANDLE snapshot, int (*cb)(PROCESSENTRY32 *, va_list arg), ...);
 
 char json_path[PATH_MAX] = DEFAULT_JSON_PATH;
 uint32_t default_prefer = PREFER_CACHE;
@@ -105,69 +109,7 @@ static void usrcfg_exit(void)
         jbuf_deinit(&jbuf_usrcfg);
 }
 
-static void profiles_name_generate(struct list_head *h)
-{
-        profile_t *p, *s;
-
-        list_for_each_entry_safe(p, s, h, node) {
-                if (is_strptr_set(p->name))
-                        continue;
-
-                wchar_t *exe = wcsstr(p->process, L".exe");
-                if (!exe) {
-                        pr_warn("\"%ls\" does not contains \".exe\", removed\n", p->process);
-                        list_del(&p->node);
-                        free(p);
-
-                        continue;
-                }
-
-                memset(p->name, L'\0', sizeof(p->name));
-                wcsncpy(p->name, p->process, ((intptr_t)exe - (intptr_t)p->process) / sizeof(wchar_t));
-        }
-}
-
-// FIXME: O(n^)
-static int is_profile_list_contain(struct list_head *h, profile_t *p)
-{
-        profile_t *t;
-
-        list_for_each_entry(t, h, node) {
-                if (is_wstr_equal(t->name, p->name))
-                        return 1;
-        }
-
-        return 0;
-}
-
-static int profiles_merge(struct list_head *head, struct list_head *append)
-{
-        profile_t *n, *s;
-
-        list_for_each_entry_safe(n, s, append, node) {
-                if (is_profile_list_contain(head, n)) {
-                        pr_dbg("profile %ls already exists\n", n->name);
-                        continue;
-                }
-
-                list_del(&n->node);
-                list_add_tail(&n->node, head);
-        }
-
-        return 0;
-}
-
-static void profiles_free(struct list_head *head)
-{
-        profile_t *p, *s;
-
-        list_for_each_entry_safe(p, s, head, node) {
-                list_del(&p->node);
-                free(p);
-        }
-}
-
-void wnd_msg_process(int blocking)
+static void wnd_msg_process(int blocking)
 {
         MSG msg;
 
@@ -183,6 +125,45 @@ void wnd_msg_process(int blocking)
 
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
+        }
+}
+
+static void loaded_profiles_name_generate(void)
+{
+        profile_t *p, *s;
+
+        list_for_each_entry_safe(p, s, &profiles, node) {
+                if (profile_name_generate(p) == -EINVAL) {
+                        pr_mb_warn("\"%ls\" does not contains \".exe\", removed\n", p->process);
+                        list_del(&p->node);
+                        free(p);
+                }
+        }
+}
+
+static void loaded_profiles_validate(void)
+{
+        profile_t *p, *s;
+
+        list_for_each_entry_safe(p, s, &profiles, node) {
+                profile_t *pp, *ps, *tail = container_of(profiles.prev, profile_t, node);
+
+                if (is_strptr_not_set(p->name)) {
+                        pr_mb_warn("Unable to create registry key with empty profile name, removed\n");
+                        list_del(&p->node);
+                        free(p);
+                        continue;
+                }
+
+                if (p != tail) {
+                        list_for_each_entry_safe(pp, ps, &p->node, node) {
+                                if (is_wstr_equal(p->name, pp->name)) {
+                                        pr_mb_warn("Unable to create duplicated registry key for profile \"%ls\", removed\n", pp->name);
+                                        list_del(&pp->node);
+                                        free(pp);
+                                }
+                        }
+                }
         }
 }
 
@@ -217,17 +198,20 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 goto exit_usrcfg;
         }
 
-        profiles_name_generate(&profiles);
         profiles_registry_read(&profiles_reg);
         profiles_merge(&profiles, &profiles_reg);
-        profiles_free(&profiles_reg);
+        profile_list_free(&profiles_reg);
+        loaded_profiles_name_generate();
+        loaded_profiles_validate();
         __profiles_registry_write(&profiles);
         default_prefer_registry_write(default_prefer);
         default_prefer_registry_read(&default_prefer);
 
+        profile_gui_init();
+
         if ((err = vcache_tray_init(ins))) {
                 pr_mb_err("failed to init tray\n");
-                goto exit_usrcfg;
+                goto exit_gui;
         }
 
         wnd_msg_process(1);
@@ -238,6 +222,9 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 if ((err = jbuf_save(&jbuf_usrcfg, json_path)))
                         pr_mb_err("failed to save config, err = %d\n", err);
         }
+
+exit_gui:
+        profile_gui_deinit();
 
 exit_usrcfg:
         usrcfg_exit();
