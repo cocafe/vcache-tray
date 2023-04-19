@@ -79,6 +79,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wextra)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-unused-parameter)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wno-unused-function)
+target_compile_options(${PROJECT_NAME} PRIVATE -D_WIN32_WINNT=_WIN32_WINNT_WIN10)
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
         target_compile_options(${PROJECT_NAME} PRIVATE -g3)
