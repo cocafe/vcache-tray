@@ -97,7 +97,7 @@ int usrcfg_save(void)
         pthread_mutex_lock(&profiles_lock);
 
         if ((err = jbuf_save(&jbuf_usrcfg, json_path)))
-                pr_mb_err("failed to save config, err = %d\n", err);
+                pr_mb_err("failed to save config to \"%s\", err = %d\n", json_path, err);
 
         pr_info("saved json config: \"%s\"\n", json_path);
 
@@ -303,8 +303,7 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         vcache_tray_exit();
 
         if (autosave) {
-                if ((err = jbuf_save(&jbuf_usrcfg, json_path)))
-                        pr_mb_err("failed to save config, err = %d\n", err);
+                usrcfg_save();
         }
 
 exit_gui:
