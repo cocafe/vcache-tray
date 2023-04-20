@@ -49,8 +49,8 @@ set(SOURCE_FILES
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCE_FILES})
 
 if (WIN32 AND MINGW)
-        target_compile_options(${PROJECT_NAME} PRIVATE -static)
-        target_compile_options(${PROJECT_NAME} PRIVATE -static-libgcc)
+        target_link_options(${PROJECT_NAME} PRIVATE -static)
+        target_link_options(${PROJECT_NAME} PRIVATE -static-libgcc)
 
         if (WIN32_UNICODE)
                 target_compile_options(${PROJECT_NAME} PRIVATE -municode)
