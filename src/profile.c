@@ -280,8 +280,8 @@ out:
 
 int process_selection_list_show(struct nk_context *ctx, struct profile_wnd_data *data)
 {
-        static char filter_buf[128] = { 0 };
-        static int filter_len = 0;
+        static __thread char filter_buf[128] = { 0 };
+        static __thread int filter_len = 0;
         int ret = 0;
 
         if (!data->proc_list_info && !data->proc_list_sel) {
@@ -293,7 +293,7 @@ int process_selection_list_show(struct nk_context *ctx, struct profile_wnd_data 
         nk_layout_row_dynamic(ctx, widget_h, 1);
         nk_edit_string(ctx, NK_EDIT_FIELD, filter_buf, &filter_len, sizeof(filter_buf), nk_filter_default);
 
-        if (filter_len >= 0)
+        if (filter_len >= 0 && (size_t)filter_len < sizeof(filter_buf))
                 filter_buf[filter_len] = '\0';
 
         filter_buf[sizeof(filter_buf) - 1] = '\0';
@@ -352,7 +352,7 @@ close:
 int profile_on_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
 {
         struct profile_wnd_data *data = nkgdi_window_userdata_get(wnd);
-        static profile_t *selected = NULL, *next = NULL; // TODO: move to data
+        static __thread profile_t *selected = NULL, *next = NULL;
 
         if (g_should_exit)
                 return 0;
