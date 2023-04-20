@@ -36,6 +36,7 @@ uint32_t autosave = 0;
 LIST_HEAD(profiles);
 LIST_HEAD(profiles_reg);
 jbuf_t jbuf_usrcfg;
+pthread_mutex_t profiles_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 
 lsopt_strbuf(c, json_path, json_path, sizeof(json_path), "JSON config path");
 
@@ -85,6 +86,20 @@ static int usrcfg_root_key_create(jbuf_t *b)
         jbuf_obj_close(b, root);
 
         return 0;
+}
+
+int usrcfg_save(void)
+{
+        int err;
+
+        pthread_mutex_lock(&profiles_lock);
+
+        if ((err = jbuf_save(&jbuf_usrcfg, json_path)))
+                pr_mb_err("failed to save config, err = %d\n", err);
+
+        pthread_mutex_unlock(&profiles_lock);
+
+        return err;
 }
 
 static int usrcfg_init(void)

@@ -9,6 +9,8 @@
 #include "profile.h"
 #include "vcache-tray.h"
 
+extern int usrcfg_save(void);
+
 static void tray_icon_update(void);
 
 static void tray_default_prefer_update(struct tray_menu *m)
@@ -111,9 +113,7 @@ static void loglvl_update(struct tray_menu *m)
 
 static void tray_save_click(struct tray_menu *m)
 {
-        int err;
-        if ((err = jbuf_save(&jbuf_usrcfg, json_path)))
-                pr_mb_err("failed to save config, err = %d\n", err);
+        usrcfg_save();
 }
 
 static void tray_profile_click(struct tray_menu *m)

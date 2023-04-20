@@ -37,6 +37,7 @@
 #include "registry.h"
 
 extern struct list_head profiles;
+extern pthread_mutex_t profiles_lock;
 
 static pthread_t profile_wnd_tid = 0;
 static int widget_h = 40;
@@ -512,8 +513,13 @@ int profile_on_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
         }
 
         if (nk_button_label(ctx, "Delete") && selected) {
+                pthread_mutex_lock(&profiles_lock);
+
                 list_del(&selected->node);
                 free(selected);
+
+                pthread_mutex_unlock(&profiles_lock);
+
                 next = list_empty(&profiles) ? NULL : container_of(profiles.prev, profile_t, node);
         }
 
