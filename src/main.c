@@ -167,6 +167,39 @@ static void loaded_profiles_validate(void)
         }
 }
 
+static int is_process_exist(PROCESSENTRY32 *pe32, va_list arg)
+{
+        wchar_t *str = va_arg(arg, wchar_t *);
+
+        if (is_wstr_equal(pe32->szExeFile, str)) {
+                return 1;
+        }
+
+        return 0;
+}
+
+static int is_amd3dv_service_running(void)
+{
+        wchar_t svc[] = L"amd3dvcacheSvc.exe";
+        wchar_t user[] = L"amd3dvcacheUser.exe";
+        HANDLE snapshot = process_snapshot_create();
+        int ret = 0;
+
+        if (!snapshot) {
+                pr_mb_err("failed to get process snapshot\n");
+                return 0;
+        }
+
+        if (process_snapshot_iterate(snapshot, is_process_exist, svc) == 1 &&
+            process_snapshot_iterate(snapshot, is_process_exist, user) == 1) {
+                ret = 1;
+        }
+
+        CloseHandle(snapshot);
+
+        return ret;
+}
+
 int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         LPWSTR cmdline, int cmdshow)
 {
@@ -192,9 +225,13 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 mb_info("failed to load config, using default configs and registry profiles\n");
         }
 
+        if (!is_amd3dv_service_running()) {
+                mb_err("amd3dvcache service is not running, are driver installed and bios configured properly?\n");
+                goto exit_usrcfg;
+        }
+
         if ((err = default_prefer_registry_read(NULL))) {
-                // TODO: check amd3dv cache process...
-                pr_mb_err("failed to read %ls, are amd3dv driver and service installed properly?\n", REG_KEY_PREFERENCES);
+                mb_err("failed to read %ls, are amd3dv driver and service installed properly?\n", REG_KEY_PREFERENCES);
                 goto exit_usrcfg;
         }
 
