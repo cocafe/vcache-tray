@@ -36,6 +36,7 @@
 #include "profile.h"
 #include "registry.h"
 
+extern uint32_t g_should_exit;
 extern struct list_head profiles;
 extern pthread_mutex_t profiles_lock;
 
@@ -352,6 +353,9 @@ int profile_on_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
 {
         struct profile_wnd_data *data = nkgdi_window_userdata_get(wnd);
         static profile_t *selected = NULL, *next = NULL; // TODO: move to data
+
+        if (g_should_exit)
+                return 0;
 
         if (next != selected) {
                 selected = next;

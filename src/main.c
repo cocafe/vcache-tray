@@ -34,9 +34,11 @@ uint32_t restart_svc = 0;
 uint32_t restart_svc_force = 0;
 uint32_t autosave = 0;
 LIST_HEAD(profiles);
+
 LIST_HEAD(profiles_reg);
 jbuf_t jbuf_usrcfg;
 pthread_mutex_t profiles_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
+uint32_t g_should_exit = 0;
 
 lsopt_strbuf(c, json_path, json_path, sizeof(json_path), "JSON config path");
 
@@ -137,8 +139,11 @@ static void wnd_msg_process(int blocking)
                         PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
                 }
 
-                if (msg.message == WM_QUIT)
+                if (msg.message == WM_QUIT) {
+                        g_should_exit = 1;
                         break;
+                }
+
 
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
