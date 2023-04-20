@@ -97,6 +97,8 @@ int usrcfg_save(void)
         if ((err = jbuf_save(&jbuf_usrcfg, json_path)))
                 pr_mb_err("failed to save config, err = %d\n", err);
 
+        pr_info("saved json config: \"%s\"\n", json_path);
+
         pthread_mutex_unlock(&profiles_lock);
 
         return err;
@@ -215,6 +217,28 @@ static int is_amd3dv_service_running(void)
         return ret;
 }
 
+static int json_path_fix(void)
+{
+        wchar_t json_path_w[_MAX_PATH] = { 0 };
+        wchar_t full_path[4096] = { 0 };
+        size_t cnt;
+
+        iconv_utf82wc(json_path, sizeof(json_path), json_path_w, sizeof(json_path_w));
+        json_path_w[WCBUF_LEN(json_path_w) - 1] = L'\0';
+
+        cnt = GetFullPathName(json_path_w, WCBUF_LEN(json_path_w), full_path, NULL);
+        if (cnt == 0) {
+                mb_err("failed to get full path of json config\n");
+                return -EIO;
+        }
+
+        iconv_wc2utf8(full_path, sizeof(full_path), json_path, sizeof(json_path));
+
+        pr_rawlvl(INFO, "json config: \"%s\"\n", json_path);
+
+        return 0;
+}
+
 int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         LPWSTR cmdline, int cmdshow)
 {
@@ -231,22 +255,25 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         if ((err = logging_init()))
                 return err;
 
+        if ((err = json_path_fix()))
+                return err;
+
         if ((err = usrcfg_init())) {
                 if (err == -EINVAL) {
-                        pr_mb_err("invalid JSON config, please check\n");
+                        pr_mb_err("Invalid JSON config, please check\n");
                         return err;
                 }
 
-                mb_info("failed to load config, using default configs and registry profiles\n");
+                mb_info("Failed to load config: \"%s\"\nUsing default values and registry profiles\n", json_path);
         }
 
         if (!is_amd3dv_service_running()) {
-                mb_err("amd3dvcache service is not running, are driver installed and bios configured properly?\n");
+                mb_err("AMD 3D V-Cache service is not running, are driver installed and bios configured properly?\n");
                 goto exit_usrcfg;
         }
 
         if ((err = default_prefer_registry_read(NULL))) {
-                mb_err("failed to read %ls, are amd3dv driver and service installed properly?\n", REG_KEY_PREFERENCES);
+                mb_err("Failed to read \"%ls\"\nAre amd3dv driver and service installed properly?\n", REG_KEY_PREFERENCES);
                 goto exit_usrcfg;
         }
 
