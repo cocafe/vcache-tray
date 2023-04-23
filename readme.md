@@ -9,7 +9,8 @@ A tray utility to control dynamic CCD preference of heterogeneous AMD 3D V-Cache
 - Install latest BIOS and AMD chipset driver
 - Option `CPPC Dynamic Preferred Cores` in BIOS `SMU menu` must be set to `AUTO` or `Driver` to allow OS control via `AMD 3D V-Cache Performance Optimizer` device
   - Otherwise this device will not work and appear in Device Manager
-
+  - ⚠ On ASUS Proart-x670E, BIOS 1202, if `Max Clock Limit` is enabled in `PBO` menu, both BIOS and driver `CPPC prefer CCD` function will not work properly, dunno why.
+  
 - Recommend to turn off `Game Mode` in Windows, since you are gonna use this utility to control CCD preferences and profiles manually
 
 
