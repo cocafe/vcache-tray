@@ -23,6 +23,7 @@
 
 #include <nuklear/nuklear.h>
 #include <nuklear/nuklear_gdi.h>
+#include <nuklear/nuklear_jj.h>
 
 // #define NKGDI_UPDATE_FOREGROUND_ONLY
 #define NKGDI_IMPLEMENT_WINDOW
@@ -35,10 +36,9 @@
 #include "../asset/resource.h"
 #include "profile.h"
 #include "registry.h"
+#include "vcache-tray.h"
 
-extern uint32_t g_should_exit;
-extern struct list_head profiles;
-extern pthread_mutex_t profiles_lock;
+extern int usrcfg_save(void);
 
 static pthread_t profile_wnd_tid = 0;
 static int widget_h = 40;
@@ -528,6 +528,12 @@ int profile_on_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
         }
 
         nk_layout_row_dynamic(ctx, widget_h, 1);
+        nk_label(ctx, "", NK_TEXT_LEFT);
+
+        nk_layout_row_dynamic(ctx, widget_h, 5);
+        nk_label(ctx, "", NK_TEXT_LEFT);
+        nk_label(ctx, "", NK_TEXT_LEFT);
+        nk_label(ctx, "", NK_TEXT_LEFT);
         if (nk_button_label(ctx, "Apply")) {
                 profile_t *p = NULL;
                 int err = profile_list_validate(&profiles, &p);
@@ -545,8 +551,17 @@ int profile_on_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
 
                         next = p;
                 } else {
-                        profiles_registry_write(&profiles);
+                        if (profiles_registry_write(&profiles) == 0)
+                                mb_info("Profiles are written to registry successfully%s", restart_svc ? "\nServices restarted successfully" : "");
+                        else
+                                mb_err("Failed to apply");
                 }
+        }
+        if (nk_button_label(ctx, "Save")) {
+                if (usrcfg_save() == 0)
+                        mb_info("Config saved to %s", json_path);
+                else
+                        mb_err("Failed to save to %s", json_path);
         }
 
         return 1;
@@ -565,11 +580,11 @@ void *profile_gui_worker(void *data)
         nkwnd.cb_on_draw = profile_on_draw;
         nkwnd.cb_on_close = NULL;
 
-        nkgdi_window_create(&nkwnd, 800, (16 + 2 + 2) * widget_h, "Edit Profiles", 0, 0);
+        nkgdi_window_create(&nkwnd, 800, (17 + 2 + 2) * widget_h, "Edit Profiles", 0, 0);
         nkgdi_window_icon_set(&nkwnd, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON)));
         nkgdi_window_userdata_set(&nkwnd, &wnd_data);
         nkgdi_window_set_center(&nkwnd);
-        nk_set_style(nkgdi_window_nkctx_get(&nkwnd), THEME_DARK);
+        nk_set_style(nkgdi_window_nkctx_get(&nkwnd), THEME_SOLARIZED_LIGHT);
 
         nkgdi_window_blocking_update(&nkwnd);
 

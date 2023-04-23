@@ -2,8 +2,8 @@
 	"settings" : {
 		"default_prefer" : "cache",
 		"restart_service_on_apply" : false,
-		"restart_service_force": false,
-		"autosave_on_exit" : false
+		"restart_service_force" : false,
+		"autosave_on_exit" : true
 	},
 	"profiles" : [
 		{

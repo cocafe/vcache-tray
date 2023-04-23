@@ -1,6 +1,8 @@
 #ifndef __VCACHE_TRAY_H__
 #define __VCACHE_TRAY_H__
 
+#include <pthread.h>
+
 #include <libjj/jkey.h>
 #include <libjj/list.h>
 
@@ -12,5 +14,7 @@ extern uint32_t autosave;
 extern jbuf_t jbuf_usrcfg;
 extern struct list_head profiles;
 extern struct list_head profiles_reg;
+extern pthread_mutex_t profiles_lock;
+extern uint32_t g_should_exit;
 
 #endif // __VCACHE_TRAY_H__
