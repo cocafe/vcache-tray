@@ -30,6 +30,7 @@
 #include <nuklear/nuklear_gdiwnd.h>
 
 #include <libjj/list.h>
+#include <libjj/tray.h>
 #include <libjj/iconv.h>
 #include <libjj/logging.h>
 
@@ -39,9 +40,28 @@
 #include "vcache-tray.h"
 
 extern int usrcfg_save(void);
+extern void tray_option_item_update(struct tray_menu *m);
+extern void tray_option_item_click(struct tray_menu *m);
 
 static pthread_t profile_wnd_tid = 0;
 static int widget_h = 40;
+uint32_t nk_theme = THEME_SOLARIZED_LIGHT;
+
+struct tray_menu nk_theme_menus[] = {
+        { .name = L"Black",           .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_BLACK },
+        { .name = L"White",           .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_WHITE },
+        { .name = L"Red",             .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_RED },
+        { .name = L"Blue",            .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_BLUE },
+        { .name = L"Green",           .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_GREEN },
+        { .name = L"Purple",          .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_PURPLE },
+        { .name = L"Brown",           .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_BROWN },
+        { .name = L"Dracula",         .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_DRACULA },
+        { .name = L"Dark",            .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_DARK },
+        { .name = L"Gruvbox",         .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_GRUVBOX },
+        { .name = L"Solarized Light", .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_SOLARIZED_LIGHT },
+        { .name = L"Solarized Dark",  .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_SOLARIZED_DARK },
+        { .is_end = 1 },
+};
 
 struct proc_sel_info {
         char name[256];
@@ -361,6 +381,8 @@ int profile_on_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
                 selected = next;
         }
 
+        nk_set_style(ctx, nk_theme);
+
         nk_layout_row_begin(ctx, NK_DYNAMIC, 16 * widget_h, 2);
 
         nk_layout_row_push(ctx, 0.4);
@@ -584,7 +606,7 @@ void *profile_gui_worker(void *data)
         nkgdi_window_icon_set(&nkwnd, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON)));
         nkgdi_window_userdata_set(&nkwnd, &wnd_data);
         nkgdi_window_set_center(&nkwnd);
-        nk_set_style(nkgdi_window_nkctx_get(&nkwnd), THEME_SOLARIZED_LIGHT);
+        nk_set_style(nkgdi_window_nkctx_get(&nkwnd), nk_theme);
 
         nkgdi_window_blocking_update(&nkwnd);
 

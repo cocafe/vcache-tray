@@ -16,5 +16,6 @@ extern struct list_head profiles;
 extern struct list_head profiles_reg;
 extern pthread_mutex_t profiles_lock;
 extern uint32_t g_should_exit;
+extern uint32_t nk_theme;
 
 #endif // __VCACHE_TRAY_H__

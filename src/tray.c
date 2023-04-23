@@ -10,6 +10,7 @@
 #include "vcache-tray.h"
 
 extern int usrcfg_save(void);
+extern struct tray_menu nk_theme_menus[];
 
 static void tray_icon_update(void);
 
@@ -30,6 +31,25 @@ static void tray_default_prefer_click(struct tray_menu *m)
         default_prefer_registry_write(val);
         default_prefer_registry_read(&default_prefer);
         tray_icon_update();
+}
+
+void tray_option_item_update(struct tray_menu *m)
+{
+        uint32_t *var = m->userdata;
+        uint32_t value = (intptr_t)m->userdata2;
+
+        if (*var == value)
+                m->checked = 1;
+        else
+                m->checked = 0;
+}
+
+void tray_option_item_click(struct tray_menu *m)
+{
+        uint32_t *var = m->userdata;
+        uint32_t value = (intptr_t)m->userdata2;
+
+        *var = value;
 }
 
 static void tray_bool_item_update(struct tray_menu *m)
@@ -174,6 +194,8 @@ static struct tray g_tray = {
                 {
                         .name = L"Settings",
                         .submenu = (struct tray_menu[]) {
+                                { .name = L"Theme", .submenu = nk_theme_menus },
+                                { .is_separator = 1 },
                                 { .name = L"Restart Service Now", .on_click = tray_restart_svc_click },
                                 { .is_separator = 1 },
                                 { .name = L"Restart AMD3DV Service on Apply", .pre_show = tray_bool_item_update, .on_click = tray_bool_item_click, .userdata=&restart_svc },

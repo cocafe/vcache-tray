@@ -17,6 +17,7 @@
 #include "registry.h"
 #include "profile.h"
 #include "tray.h"
+#include "vcache-tray.h"
 
 #define DEFAULT_JSON_PATH               "config.json"
 
@@ -62,6 +63,7 @@ static int usrcfg_root_key_create(jbuf_t *b)
                         jbuf_bool_add(b, "restart_service_on_apply", &restart_svc);
                         jbuf_bool_add(b, "restart_service_force", &restart_svc_force);
                         jbuf_bool_add(b, "autosave_on_exit", &autosave);
+                        jbuf_u32_add(b, "nk_theme", &nk_theme);
                 }
 
                 jbuf_obj_close(b, settings);
