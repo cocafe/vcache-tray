@@ -1,16 +1,22 @@
 #include <stdint.h>
 
+#include <windows.h>
+#include <sysinfoapi.h>
+
 #include <libjj/tray.h>
 #include <libjj/logging.h>
 
 #include <resource.h>
 
+#include "msr.h"
 #include "registry.h"
 #include "profile.h"
 #include "vcache-tray.h"
 
 extern int usrcfg_save(void);
 extern struct tray_menu nk_theme_menus[];
+
+static uint32_t nr_cpu;
 
 static void tray_icon_update(void);
 
@@ -152,6 +158,84 @@ static void tray_restart_svc_click(struct tray_menu *m)
                 mb_err("failed to restart AMD 3D V-CACHE service");
 }
 
+static void tray_tweak_menu_update(struct tray_menu *m, int (*get)(int))
+{
+        int enabled, cpu;
+
+        if (!get) {
+                m->disabled = 1;
+                return;
+        }
+
+        cpu = 0;
+        enabled = get(cpu);
+        if (enabled < 0) {
+                m->disabled = 1;
+                return;
+        }
+
+        m->disabled = 0;
+        if (enabled)
+                m->checked = 1;
+        else
+                m->checked = 0;
+}
+
+static void tray_tweak_menu_on_click(struct tray_menu *m, int (*set)(int, int))
+{
+        if (!set)
+                return;
+
+        for (int cpu = 0; cpu < (int)nr_cpu; cpu++) {
+                int ret = set(cpu, !m->checked);
+                if (ret < 0) {
+                        mb_err("Failed to write CPU%d", cpu);
+                        return;
+                }
+        }
+}
+
+static void tray_pkgc6_update(struct tray_menu *m)
+{
+        int enabled = package_c6_get();
+
+        if (enabled < 0) {
+                m->disabled = 1;
+                return;
+        }
+
+        m->disabled = 0;
+        if (enabled)
+                m->checked = 1;
+        else
+                m->checked = 0;
+}
+
+static void tray_pkgc6_on_click(struct tray_menu *m)
+{
+        package_c6_set(!m->checked);
+}
+
+static void tray_cc6_update(struct tray_menu *m)
+{
+        tray_tweak_menu_update(m, core_c6_get);
+}
+
+static void tray_cc6_on_click(struct tray_menu *m)
+{
+        tray_tweak_menu_on_click(m, core_c6_set);
+}
+
+static void tray_cpb_update(struct tray_menu *m)
+{
+        tray_tweak_menu_update(m, cpb_get);
+}
+
+static void tray_cpb_on_click(struct tray_menu *m)
+{
+        tray_tweak_menu_on_click(m, cpb_set);
+}
+
 static void tray_double_click(struct tray *tray, void *userdata)
 {
         profile_gui_show();
@@ -165,10 +249,19 @@ static struct tray g_tray = {
         },
         .menu = (struct tray_menu[]) {
                 {
-                        .name = L"Prefer",
+                        .name = L"Prefer CCD",
                         .submenu = (struct tray_menu[]) {
                                 { .name = L"3D V-Cache", .pre_show = tray_default_prefer_update, .on_click = tray_default_prefer_click, .userdata=(void *)PREFER_CACHE },
                                 { .name = L"Frequency", .pre_show = tray_default_prefer_update, .on_click = tray_default_prefer_click, .userdata=(void *)PREFER_FREQ },
+                                { .is_end = 1 },
+                        },
+                },
+                {
+                        .name = L"Tweak",
+                        .submenu = (struct tray_menu[]) {
+                                { .name = L"Core C6", .pre_show = tray_cc6_update, .on_click = tray_cc6_on_click },
+                                { .name = L"Package C6", .pre_show = tray_pkgc6_update, .on_click = tray_pkgc6_on_click },
+                                { .name = L"Core Performance Boost", .pre_show = tray_cpb_update, .on_click = tray_cpb_on_click },
                                 { .is_end = 1 },
                         },
                 },
@@ -230,9 +323,20 @@ void tray_icon_update(void)
         }
 }
 
+uint32_t nr_cpu_get(void)
+{
+        SYSTEM_INFO info = { 0 };
+
+        GetSystemInfo(&info);
+
+        return info.dwNumberOfProcessors;
+}
+
 int vcache_tray_init(HINSTANCE ins)
 {
         int err;
+
+        nr_cpu = nr_cpu_get();
 
         err = tray_init(&g_tray, ins);
         if (!err) {

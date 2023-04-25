@@ -14,6 +14,7 @@
 #include <libjj/iconv.h>
 #include <libjj/logging.h>
 
+#include <libwinring0/winring0.h>
 #include "registry.h"
 #include "profile.h"
 #include "tray.h"
@@ -265,6 +266,11 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         if ((err = json_path_fix()))
                 return err;
 
+        if ((err = winring0_init())) {
+                mb_err("Failed to initialize WinRing0");
+                return err;
+        }
+
         if ((err = usrcfg_init())) {
                 if (err == -EINVAL) {
                         pr_mb_err("Invalid JSON config, please check\n");
@@ -313,6 +319,8 @@ exit_gui:
 
 exit_usrcfg:
         usrcfg_exit();
+
+        winring0_deinit();
 
         logging_exit();
 

@@ -44,6 +44,8 @@ set(SOURCE_FILES
     src/registry.c
     src/profile.h
     src/profile.c
+    src/msr.c
+    src/msr.h
     )
 
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCE_FILES})
@@ -91,6 +93,7 @@ elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 endif()
 
 add_subdirectory(lib/libjj)
+add_subdirectory(lib/libwinring0)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PUBLIC lib)
@@ -98,6 +101,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC asset)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
 
 target_link_libraries(${PROJECT_NAME} jjcom)
+target_link_libraries(${PROJECT_NAME} winring0)
 target_link_libraries(${PROJECT_NAME} msimg32)
 target_link_libraries(${PROJECT_NAME} ntdll)
 target_link_libraries(${PROJECT_NAME} ntoskrnl)
