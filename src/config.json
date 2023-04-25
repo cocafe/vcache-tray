@@ -1,11 +1,22 @@
 {
 	"settings" : {
-		"default_prefer" : "cache",
+		"default_prefer" : "freq",
 		"restart_service_on_apply" : false,
 		"restart_service_force" : false,
-		"autosave_on_exit" : true
+		"autosave_on_exit" : true,
+		"nk_theme" : 11
+	},
+	"tweaks" : {
+		"pkg_c6_enabled" : false,
+		"core_c6_enabled" : false,
+		"cpb_enabled" : true
 	},
 	"profiles" : [
+		{
+			"name" : "csgo",
+			"process" : "csgo.exe",
+			"prefer" : "freq"
+		},
 		{
 			"name" : "Gensh1t",
 			"process" : "Yuanshen.exe",
@@ -15,11 +26,6 @@
 			"name" : "PUBG",
 			"process" : "TslGame.exe",
 			"prefer" : "cache"
-		},
-		{
-			"name" : "csgo",
-			"process" : "csgo.exe",
-			"prefer" : "freq"
 		}
 	]
 }
