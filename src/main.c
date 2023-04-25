@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <pthread.h>
 
 #include <windows.h>
 #include <processthreadsapi.h>
@@ -15,6 +16,8 @@
 #include <libjj/logging.h>
 
 #include <libwinring0/winring0.h>
+
+#include "msr.h"
 #include "registry.h"
 #include "profile.h"
 #include "tray.h"
@@ -30,8 +33,15 @@ static const char *str_prefer[] = {
 extern HANDLE process_snapshot_create(void);
 extern int process_snapshot_iterate(HANDLE snapshot, int (*cb)(PROCESSENTRY32 *, va_list arg), ...);
 
+static pthread_t msr_watchdog;
+
+uint32_t nr_cpu;
+
 char json_path[PATH_MAX] = DEFAULT_JSON_PATH;
 uint32_t default_prefer = PREFER_CACHE;
+uint32_t cc6_enabled = 0;
+uint32_t pc6_enabled = 0;
+uint32_t cpb_enabled = 1;
 uint32_t restart_svc = 0;
 uint32_t restart_svc_force = 0;
 uint32_t autosave = 0;
@@ -43,6 +53,15 @@ pthread_mutex_t profiles_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 uint32_t g_should_exit = 0;
 
 lsopt_strbuf(c, json_path, json_path, sizeof(json_path), "JSON config path");
+
+static uint32_t nr_cpu_get(void)
+{
+        SYSTEM_INFO info = { 0 };
+
+        GetSystemInfo(&info);
+
+        return info.dwNumberOfProcessors;
+}
 
 static int usrcfg_root_key_create(jbuf_t *b)
 {
@@ -68,6 +87,18 @@ static int usrcfg_root_key_create(jbuf_t *b)
                 }
 
                 jbuf_obj_close(b, settings);
+        }
+
+        {
+                void *tweaks = jbuf_obj_open(b, "tweaks");
+
+                {
+                        jbuf_bool_add(b, "pkg_c6_enabled", &pc6_enabled);
+                        jbuf_bool_add(b, "core_c6_enabled", &cc6_enabled);
+                        jbuf_bool_add(b, "cpb_enabled", &cpb_enabled);
+                }
+
+                jbuf_obj_close(b, tweaks);
         }
 
         {
@@ -247,6 +278,16 @@ static int json_path_fix(void)
         return 0;
 }
 
+static void msr_apply(void)
+{
+        for (uint32_t cpu = 0; cpu < nr_cpu; cpu++) {
+                core_c6_set(cpu, cc6_enabled);
+                cpb_set(cpu, cpb_enabled);
+        }
+
+        package_c6_set(pc6_enabled);
+}
+
 int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         LPWSTR cmdline, int cmdshow)
 {
@@ -256,6 +297,8 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
 
         // this equals "System(enhanced)" in compatibility setting
         SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED);
+
+        nr_cpu = nr_cpu_get();
 
         if ((err = lopts_parse(__argc, __wargv, NULL)))
                 return err;
@@ -289,6 +332,8 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 mb_err("Failed to read \"%ls\"\nAre amd3dv driver and service installed properly?\n", REG_KEY_PREFERENCES);
                 goto exit_usrcfg;
         }
+
+        msr_apply();
 
         profiles_registry_read(&profiles_reg);
         profiles_merge(&profiles, &profiles_reg);

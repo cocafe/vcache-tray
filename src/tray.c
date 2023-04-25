@@ -16,8 +16,6 @@
 extern int usrcfg_save(void);
 extern struct tray_menu nk_theme_menus[];
 
-static uint32_t nr_cpu;
-
 static void tray_icon_update(void);
 
 static void tray_default_prefer_update(struct tray_menu *m)
@@ -183,11 +181,16 @@ static void tray_tweak_menu_update(struct tray_menu *m, int (*get)(int))
 
 static void tray_tweak_menu_on_click(struct tray_menu *m, int (*set)(int, int))
 {
+        uint32_t *val = m->userdata;
+        int enable = !m->checked;
+
         if (!set)
                 return;
 
+        *val = enable;
+
         for (int cpu = 0; cpu < (int)nr_cpu; cpu++) {
-                int ret = set(cpu, !m->checked);
+                int ret = set(cpu, enable);
                 if (ret < 0) {
                         mb_err("Failed to write CPU%d", cpu);
                         return;
@@ -213,7 +216,9 @@ static void tray_pkgc6_update(struct tray_menu *m)
 
 static void tray_pkgc6_on_click(struct tray_menu *m)
 {
-        package_c6_set(!m->checked);
+        int enable = !m->checked;
+        package_c6_set(enable);
+        pc6_enabled = enable;
 }
 
 static void tray_cc6_update(struct tray_menu *m)
@@ -259,9 +264,9 @@ static struct tray g_tray = {
                 {
                         .name = L"Tweak",
                         .submenu = (struct tray_menu[]) {
-                                { .name = L"Core C6", .pre_show = tray_cc6_update, .on_click = tray_cc6_on_click },
+                                { .name = L"Core C6", .pre_show = tray_cc6_update, .on_click = tray_cc6_on_click, .userdata = &cc6_enabled },
                                 { .name = L"Package C6", .pre_show = tray_pkgc6_update, .on_click = tray_pkgc6_on_click },
-                                { .name = L"Core Performance Boost", .pre_show = tray_cpb_update, .on_click = tray_cpb_on_click },
+                                { .name = L"Core Performance Boost", .pre_show = tray_cpb_update, .on_click = tray_cpb_on_click, .userdata = &cpb_enabled },
                                 { .is_end = 1 },
                         },
                 },
@@ -323,20 +328,9 @@ void tray_icon_update(void)
         }
 }
 
-uint32_t nr_cpu_get(void)
-{
-        SYSTEM_INFO info = { 0 };
-
-        GetSystemInfo(&info);
-
-        return info.dwNumberOfProcessors;
-}
-
 int vcache_tray_init(HINSTANCE ins)
 {
         int err;
-
-        nr_cpu = nr_cpu_get();
 
         err = tray_init(&g_tray, ins);
         if (!err) {

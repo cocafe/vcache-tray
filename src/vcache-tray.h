@@ -6,6 +6,7 @@
 #include <libjj/jkey.h>
 #include <libjj/list.h>
 
+extern uint32_t nr_cpu;
 extern char json_path[PATH_MAX];
 extern uint32_t default_prefer;
 extern uint32_t restart_svc;
@@ -17,5 +18,8 @@ extern struct list_head profiles_reg;
 extern pthread_mutex_t profiles_lock;
 extern uint32_t g_should_exit;
 extern uint32_t nk_theme;
+extern uint32_t cc6_enabled;
+extern uint32_t pc6_enabled;
+extern uint32_t cpb_enabled;
 
 #endif // __VCACHE_TRAY_H__
