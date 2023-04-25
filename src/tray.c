@@ -1,8 +1,5 @@
 #include <stdint.h>
 
-#include <windows.h>
-#include <sysinfoapi.h>
-
 #include <libjj/tray.h>
 #include <libjj/logging.h>
 
@@ -187,7 +184,8 @@ static void tray_tweak_menu_on_click(struct tray_menu *m, int (*set)(int, int))
         if (!set)
                 return;
 
-        *val = enable;
+        if (val)
+                *val = enable;
 
         for (int cpu = 0; cpu < (int)nr_cpu; cpu++) {
                 int ret = set(cpu, enable);

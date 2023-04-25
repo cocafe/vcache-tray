@@ -7,11 +7,11 @@
 #include <windows.h>
 #include <processthreadsapi.h>
 #include <tlhelp32.h>
+#include <sysinfoapi.h>
 
 #include <libjj/utils.h>
 #include <libjj/opts.h>
 #include <libjj/jkey.h>
-#include <libjj/tray.h>
 #include <libjj/iconv.h>
 #include <libjj/logging.h>
 
