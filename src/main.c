@@ -33,8 +33,6 @@ static const char *str_prefer[] = {
 extern HANDLE process_snapshot_create(void);
 extern int process_snapshot_iterate(HANDLE snapshot, int (*cb)(PROCESSENTRY32 *, va_list arg), ...);
 
-static pthread_t msr_watchdog;
-
 uint32_t nr_cpu;
 
 char json_path[PATH_MAX] = DEFAULT_JSON_PATH;
@@ -178,7 +176,6 @@ static void wnd_msg_process(int blocking)
                         break;
                 }
 
-
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
         }
@@ -288,9 +285,50 @@ static void msr_apply(void)
         package_c6_set(pc6_enabled);
 }
 
+static LRESULT CALLBACK powernotify_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+        if (msg == WM_POWERBROADCAST && wparam == PBT_APMRESUMEAUTOMATIC) {
+                pr_info("system has resumed");
+                msr_apply();
+
+                return TRUE;
+        }
+
+        return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+static HANDLE power_notify_wnd_create(void)
+{
+        HWND wnd = NULL;
+        WNDCLASSEX wc = { 0 };
+
+        wc.cbSize              = sizeof(WNDCLASSEX);
+        wc.lpfnWndProc         = powernotify_proc;
+        wc.hInstance           = GetModuleHandle(NULL);
+        wc.lpszClassName       = L"PowerNotifyWnd";
+        if (!RegisterClassEx(&wc)) {
+                pr_err("RegisterClassEx() failed\n");
+                return NULL;
+        }
+
+        wnd = CreateWindowEx(0, L"PowerNotifyWnd",
+                             NULL, 0, 0, 0, 0, 0, 0, 0,
+                             GetModuleHandle(NULL), 0);
+        if (wnd == NULL) {
+                pr_err("CreateWindowEx() failed\n");
+                return NULL;
+        }
+
+        ShowWindow(wnd, SW_HIDE);
+        UpdateWindow(wnd);
+
+        return wnd;
+}
+
 int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         LPWSTR cmdline, int cmdshow)
 {
+        HANDLE pwrnotify_wnd, pwrnotify;
         int err;
 
         setbuf(stdout, NULL);
@@ -313,6 +351,9 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 mb_err("Failed to initialize WinRing0");
                 return err;
         }
+
+        pwrnotify_wnd = power_notify_wnd_create();
+        pwrnotify = RegisterSuspendResumeNotification(pwrnotify_wnd, DEVICE_NOTIFY_WINDOW_HANDLE);
 
         if ((err = usrcfg_init())) {
                 if (err == -EINVAL) {
@@ -352,6 +393,8 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
         }
 
         wnd_msg_process(1);
+
+        UnregisterPowerSettingNotification(pwrnotify);
 
         vcache_tray_exit();
 
