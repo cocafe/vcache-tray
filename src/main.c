@@ -288,7 +288,7 @@ static void msr_apply(void)
 static LRESULT CALLBACK powernotify_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
         if (msg == WM_POWERBROADCAST && wparam == PBT_APMRESUMEAUTOMATIC) {
-                pr_info("system has resumed");
+                pr_info("system has resumed\n");
                 msr_apply();
 
                 return TRUE;
