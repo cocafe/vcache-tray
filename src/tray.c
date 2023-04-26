@@ -259,6 +259,8 @@ static struct tray g_tray = {
                                 { .is_end = 1 },
                         },
                 },
+                { .name = L"Profiles", .on_click = tray_profile_click, },
+                { .is_separator = 1 },
                 {
                         .name = L"Tweak",
                         .submenu = (struct tray_menu[]) {
@@ -269,7 +271,6 @@ static struct tray g_tray = {
                         },
                 },
                 { .is_separator = 1 },
-                { .name = L"Profiles", .on_click = tray_profile_click, },
                 { .name = L"Save", .on_click = tray_save_click },
                 { .is_separator = 1 },
                 {
