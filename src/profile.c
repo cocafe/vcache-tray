@@ -44,23 +44,24 @@ extern void tray_option_item_update(struct tray_menu *m);
 extern void tray_option_item_click(struct tray_menu *m);
 
 static pthread_t profile_wnd_tid = 0;
-static int widget_h = 40;
+static float widget_h = 40.0f;
+static float menu_h = 25.0f;
 uint32_t nk_theme = THEME_SOLARIZED_LIGHT;
 
-struct tray_menu nk_theme_menus[] = {
-        { .name = L"Black",           .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_BLACK },
-        { .name = L"White",           .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_WHITE },
-        { .name = L"Red",             .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_RED },
-        { .name = L"Blue",            .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_BLUE },
-        { .name = L"Green",           .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_GREEN },
-        { .name = L"Purple",          .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_PURPLE },
-        { .name = L"Brown",           .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_BROWN },
-        { .name = L"Dracula",         .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_DRACULA },
-        { .name = L"Dark",            .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_DARK },
-        { .name = L"Gruvbox",         .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_GRUVBOX },
-        { .name = L"Solarized Light", .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_SOLARIZED_LIGHT },
-        { .name = L"Solarized Dark",  .pre_show = tray_option_item_update, .on_click = tray_option_item_click, .userdata = &nk_theme, .userdata2 = (void *)THEME_SOLARIZED_DARK },
-        { .is_end = 1 },
+static const char *nk_theme_strs[] = {
+        [THEME_DEFAULT] = "Nuklear Default",
+        [THEME_BLACK] = "Black",
+        [THEME_WHITE] = "White",
+        [THEME_RED] = "Red",
+        [THEME_BLUE] = "Blue",
+        [THEME_GREEN] = "Green",
+        [THEME_PURPLE] = "Purple",
+        [THEME_BROWN] = "Brown",
+        [THEME_DRACULA] = "Dracula",
+        [THEME_DARK] = "Dark",
+        [THEME_GRUVBOX] = "Gruvbox",
+        [THEME_SOLARIZED_LIGHT] = "Solarized Light",
+        [THEME_SOLARIZED_DARK] = "Solarized Dark",
 };
 
 struct proc_sel_info {
@@ -383,6 +384,25 @@ int profile_on_draw(struct nkgdi_window *wnd, struct nk_context *ctx)
 
         nk_set_style(ctx, nk_theme);
 
+        nk_menubar_begin(ctx);
+
+        nk_layout_row_begin(ctx, NK_STATIC, menu_h, 1);
+        nk_layout_row_push(ctx, 45);
+        if (nk_menu_begin_label(ctx, "Theme", NK_TEXT_ALIGN_LEFT, nk_vec2(200, 800))) {
+                nk_layout_row_dynamic(ctx, menu_h, 1);
+
+                for (int i = 0; i < NUM_NK_THEMES; i++) {
+                        if (nk_theme_strs[i] && nk_menu_item_label(ctx, nk_theme_strs[i], NK_TEXT_ALIGN_LEFT)) {
+                                nk_set_style(ctx, i);
+                                nk_theme = i;
+                        }
+                }
+
+                nk_menu_end(ctx);
+        }
+
+        nk_menubar_end(ctx);
+
         nk_layout_row_begin(ctx, NK_DYNAMIC, 16 * widget_h, 2);
 
         nk_layout_row_push(ctx, 0.4);
@@ -602,7 +622,7 @@ void *profile_gui_worker(void *data)
         nkwnd.cb_on_draw = profile_on_draw;
         nkwnd.cb_on_close = NULL;
 
-        nkgdi_window_create(&nkwnd, 800, (17 + 2 + 2) * widget_h, "Edit Profiles", 0, 0);
+        nkgdi_window_create(&nkwnd, 800, (17 + 2 + 2) * widget_h + menu_h, "Edit Profiles", 0, 0);
         nkgdi_window_icon_set(&nkwnd, LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON)));
         nkgdi_window_userdata_set(&nkwnd, &wnd_data);
         nkgdi_window_set_center(&nkwnd);
