@@ -283,6 +283,8 @@ static void msr_apply(void)
         }
 
         package_c6_set(pc6_enabled);
+
+        pr_info("msr tweaks applied\n");
 }
 
 static LRESULT CALLBACK powernotify_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
