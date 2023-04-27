@@ -17,19 +17,22 @@ A tray utility to control dynamic CCD preference of heterogeneous AMD 3D V-Cache
 ### Note
 
 - ⚠ On ASUS Proart-x670E, BIOS 1202, if `Max Clock Limit` is enabled in `PBO` menu, both BIOS and driver `CPPC prefer CCD` function will not work properly, dunno why.
-- ⚠ Recommend switch the prefer CCD or setup profile before starting new program, it looks like some activated threads will stick on original CCD until they are terminated.
+- ⚠ Recommended switch the prefer CCD or setup profile before starting new program, it looks like some activated threads will stick on original CCD until they are terminated.
 - ⚠ `Prefer CCD` may not affect programs or threads that have been set a affinity by themselves or manually.
-- ⚠ Only tested on Windows 10 yet.
-
+- ⚠ `Reset Service Forcefully` option may cause AMD 3dvcache or system stuck, use with caution!
+  - `Restart Service on Apply` is NOT recommended, just wait for 3dvcache polling the registry changes, although this may take a while sometimes.
+- Tweaks:
+  - Disabling `Package/Core C6` may reduce tiny lags and freezes in some games and cases. But boost freq may be limited if multiple cores are activated at the same time without `Core C6` enabled, this may behave differently on various BIOS, please check on your platform.
+  - `Core Performance Boost`, something like `Turbo Boost` on Intel, disable it can save power. 
 
 
 ### How to use
 
 Run it and switch modes via tray icon.
 
-To start with Windows, add a task in `Task Scheduler`.
+To start with Windows, create a task in `Task Scheduler`.
 
-Pass `-h` to check more options, `--alloc_console` to check debug logs.
+Pass `-h` to check more options, `--alloc_console` to show debug logs.
 
 
 
