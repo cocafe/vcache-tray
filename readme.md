@@ -1,6 +1,6 @@
 # VCACHE-TRAY
 
-A tray utility to control dynamic CCD preference of heterogeneous AMD 3D V-Cache CPUs like 7950x3D and 7900x3D. Some privileged games ~~(aka. GenSh1t )~~ and programs are refused to set affinity, this utility may help to overcome this case to schedule these bad behaved programs to preferred CCD.
+A tray utility to control dynamic CCD preference of heterogeneous AMD 3D V-Cache CPUs like 7950x3D and 7900x3D. Some privileged games ~~(aka. GenSh1t )~~ and programs are refused to set affinity, this utility may help to overcome this case to schedule these bad behaved programs to preferred CCD without locking preferred CCD in BIOS.
 
 ![](./asset/preview.png)
 
