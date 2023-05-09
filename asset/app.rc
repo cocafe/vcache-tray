@@ -4,3 +4,4 @@
 101		              		ICON				"app.ico"
 102		              		ICON				"app_blue.ico"
 103		              		ICON				"app_red.ico"
+200                                     BINARY                          "ubuntu_mono_bold_mod.ttf"

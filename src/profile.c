@@ -662,8 +662,52 @@ int profile_gui_show(void)
         return 0;
 }
 
+struct font_rsc {
+        int id;
+        HFONT font;
+};
+
+struct font_rsc g_font_rscs[] = {
+        { .id = IDI_FONT_BUILTIN },
+};
+
+void font_rsc_load(void)
+{
+        HINSTANCE hInstance = GetModuleHandle(NULL);
+
+        for (size_t i = 0; i < ARRAY_SIZE(g_font_rscs); i++) {
+                struct font_rsc *rsc = &g_font_rscs[i];
+                HRSRC hFntRes = FindResource(hInstance, MAKEINTRESOURCE(rsc->id), L"BINARY");
+
+                if (hFntRes) {
+                        HGLOBAL hFntMem = LoadResource(hInstance, hFntRes);
+                        if (hFntMem) {
+                                void *FntData = LockResource(hFntMem); // Will be released by windows
+                                DWORD nFonts = 0, len = SizeofResource(hInstance, hFntRes);
+
+                                rsc->font = AddFontMemResourceEx(FntData, len, NULL, &nFonts);
+                        } else {
+                                pr_err("failed to load font resource, id = %d\n", rsc->id);
+                        }
+                } else {
+                        pr_err("failed to find font resource, id = %d\n", rsc->id);
+                }
+        }
+}
+
+void font_rsc_free(void)
+{
+        for (size_t i = 0; i < ARRAY_SIZE(g_font_rscs); i++) {
+                struct font_rsc *rsc = &g_font_rscs[i];
+
+                if (rsc->font)
+                        RemoveFontMemResourceEx(rsc->font);
+        }
+}
+
 void profile_gui_init(void)
 {
+        font_rsc_load();
         nkgdi_window_init();
 }
 
@@ -673,4 +717,5 @@ void profile_gui_deinit(void)
                 pthread_join(profile_wnd_tid, NULL);
 
         nkgdi_window_shutdown();
+        font_rsc_free();
 }
