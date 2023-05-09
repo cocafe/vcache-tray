@@ -5,6 +5,12 @@
 
 #include "vcache-tray.h"
 
+// [25] CpbDis
+// [21] LockTscToCurrentP0
+#define MSR_HWCR                        0xC0010015
+#define MSR_HWCR_CPB_DIS                BIT_ULL(25)
+#define MSR_HWCR_TSC_LOCK               BIT_ULL(21)
+
 // [6:4] PstateMaxVal
 // [2:0] CurPstateLimit
 #define MSR_PSTATE_LIMIT                0xC0010061
@@ -45,21 +51,35 @@
 // [32] PC6En
 #define MSR_PMGT_MISC                   0xC0010292
 #define MSR_PMGT_MISC_PKGC6EN           BIT_ULL(32)
+#define MSR_PMGT_MISC_DF_PSTATE_DIS     BIT_ULL(6)      // RO
+#define MSR_PGMT_MISC_CUR_HWPSTATE_LMT  GENMASK_ULL(2, 0)
+
+#define MSR_CSTATE_POLICY               0xC0010294
+#define MSR_CSTATE_CLT_EN               BIT_ULL(62)
+#define MSR_CSTATE_CIT_FASTSAMPLE       BIT_ULL(61)
+#define MSR_CSTATE_CIT_EN               BIT_ULL(60)
+#define MSR_CSTATE_C1E_EN               BIT_ULL(29)
 
 // Core C6
 // [22] CCR2_CC6EN
 // [14] CCR1_CC6EN
 // [6]  CCR0_CC6EN
 #define MSR_CSTATE_CONFIG               0xC0010296
+#define MSR_CSTATE_CONFIG_CCR2_CC1EN    BIT_ULL(55)
+#define MSR_CSTATE_CONFIG_CCR1_CC1EN    BIT_ULL(47)
+#define MSR_CSTATE_CONFIG_CCR0_CC1EN    BIT_ULL(39)
 #define MSR_CSTATE_CONFIG_CCR2_CC6EN    BIT_ULL(22)
 #define MSR_CSTATE_CONFIG_CCR1_CC6EN    BIT_ULL(14)
 #define MSR_CSTATE_CONFIG_CCR0_CC6EN    BIT_ULL(6)
 
-// [25] CpbDis
-// [21] LockTscToCurrentP0
-#define MSR_HWCR                        0xC0010015
-#define MSR_HWCR_CPB_DIS                BIT_ULL(25)
-#define MSR_HWCR_TSC_LOCK               BIT_ULL(21)
+#define MSR_CPPC_ENABLE                 0xC00102B1
+#define MSR_CPPC_EN                     BIT_ULL(1)      // WRITE-1
+
+#define MSR_CPPC_REQUEST                0xC00102B3
+#define MSR_CPPC_ENERGY_PERF_PREF       GENMASK_ULL(31, 24)
+#define MSR_CPPC_DESIRED_PERF           GENMASK_ULL(23, 16)
+#define MSR_CPPC_MIN_PERF               GENMASK_ULL(15, 8)
+#define MSR_CPPC_MAX_PERF               GENMASK_ULL(7, 0)
 
 #define MSR_PERFBIAS1                   0xC0011020
 #define MSR_PERFBIAS2                   0xC0011021
