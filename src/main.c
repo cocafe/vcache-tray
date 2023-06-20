@@ -43,6 +43,7 @@ uint32_t cpb_enabled = 1;
 uint32_t restart_svc = 0;
 uint32_t restart_svc_force = 0;
 uint32_t autosave = 0;
+uint32_t no_tweaks = 0;
 LIST_HEAD(profiles);
 
 LIST_HEAD(profiles_reg);
@@ -51,6 +52,7 @@ pthread_mutex_t profiles_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
 uint32_t g_should_exit = 0;
 
 lsopt_strbuf(c, json_path, json_path, sizeof(json_path), "JSON config path");
+lopt_noarg(no_tweaks, &no_tweaks, sizeof(no_tweaks), &(uint32_t){ 1 }, "Disable tweaks");
 
 static uint32_t nr_cpu_get(void)
 {
@@ -376,7 +378,8 @@ int WINAPI wWinMain(HINSTANCE ins, HINSTANCE prev_ins,
                 goto exit_usrcfg;
         }
 
-        msr_apply();
+        if (!no_tweaks)
+                msr_apply();
 
         profiles_registry_read(&profiles_reg);
         profiles_merge(&profiles, &profiles_reg);

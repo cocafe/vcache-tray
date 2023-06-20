@@ -21,5 +21,6 @@ extern uint32_t nk_theme;
 extern uint32_t cc6_enabled;
 extern uint32_t pc6_enabled;
 extern uint32_t cpb_enabled;
+extern uint32_t no_tweaks;
 
 #endif // __VCACHE_TRAY_H__

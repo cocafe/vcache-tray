@@ -152,6 +152,11 @@ static void tray_restart_svc_click(struct tray_menu *m)
                 mb_err("failed to restart AMD 3D V-CACHE service");
 }
 
+static void tray_no_tweak_update(struct tray_menu *m)
+{
+        m->disabled = no_tweaks;
+}
+
 static void tray_tweak_menu_update(struct tray_menu *m, int (*get)(int))
 {
         int enabled, cpu;
@@ -262,6 +267,7 @@ static struct tray g_tray = {
                 { .is_separator = 1 },
                 {
                         .name = L"Tweak",
+                        .pre_show = tray_no_tweak_update,
                         .submenu = (struct tray_menu[]) {
                                 { .name = L"Core C6", .pre_show = tray_cc6_update, .on_click = tray_cc6_on_click, .userdata = &cc6_enabled },
                                 { .name = L"Package C6", .pre_show = tray_pkgc6_update, .on_click = tray_pkgc6_on_click },
