@@ -248,6 +248,27 @@ static void tray_double_click(struct tray *tray, void *userdata)
         profile_gui_show();
 }
 
+static void tray_perf_bias_update(struct tray_menu *m)
+{
+        uint32_t val = (size_t)m->userdata;
+
+        if (perf_bias == val)
+                m->checked = 1;
+        else
+                m->checked = 0;
+}
+
+static void tray_perf_bias_click(struct tray_menu *m)
+{
+        uint32_t val = (size_t)m->userdata;
+
+        if (perf_bias == val)
+                return;
+
+        perf_bias = val;
+        perf_bias_set(perf_bias);
+}
+
 static struct tray g_tray = {
         .lbtn_dblclick = tray_double_click,
         .icon = {
@@ -271,7 +292,17 @@ static struct tray g_tray = {
                         .submenu = (struct tray_menu[]) {
                                 { .name = L"Core C6", .pre_show = tray_cc6_update, .on_click = tray_cc6_on_click, .userdata = &cc6_enabled },
                                 { .name = L"Package C6", .pre_show = tray_pkgc6_update, .on_click = tray_pkgc6_on_click },
-                                { .name = L"Core Performance Boost", .pre_show = tray_cpb_update, .on_click = tray_cpb_on_click, .userdata = &cpb_enabled },
+                                { .name = L"CPB", .pre_show = tray_cpb_update, .on_click = tray_cpb_on_click, .userdata = &cpb_enabled },
+                                {
+                                        .name = L"Perf Bias",
+                                        .submenu = (struct tray_menu[]) {
+                                                { .name = L"Default", .pre_show = tray_perf_bias_update, .on_click = tray_perf_bias_click, .userdata = (void *)PERF_BIAS_DEFAULT },
+                                                { .name = L"None", .pre_show = tray_perf_bias_update, .on_click = tray_perf_bias_click, .userdata = (void *)PERF_BIAS_NONE },
+                                                { .name = L"CB23", .pre_show = tray_perf_bias_update, .on_click = tray_perf_bias_click, .userdata = (void *)PERF_BIAS_CB23 },
+                                                { .name = L"GB3", .pre_show = tray_perf_bias_update, .on_click = tray_perf_bias_click, .userdata = (void *)PERF_BIAS_GB3 },
+                                                { .name = L"RANDX", .pre_show = tray_perf_bias_update, .on_click = tray_perf_bias_click, .userdata = (void *)PERF_BIAS_RANDX },
+                                        },
+                                },
                                 { .is_end = 1 },
                         },
                 },

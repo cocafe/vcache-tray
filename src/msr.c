@@ -1,9 +1,11 @@
 #include <stdint.h>
 
 #include <libjj/bits.h>
+#include <libjj/utils.h>
 #include <libwinring0/winring0.h>
 
 #include "vcache-tray.h"
+#include "msr.h"
 
 // [25] CpbDis
 // [21] LockTscToCurrentP0
@@ -81,11 +83,22 @@
 #define MSR_CPPC_MIN_PERF               GENMASK_ULL(15, 8)
 #define MSR_CPPC_MAX_PERF               GENMASK_ULL(7, 0)
 
-#define MSR_PERFBIAS1                   0xC0011020
-#define MSR_PERFBIAS2                   0xC0011021
+// Undocumented MSR:
+//
+// 0xC0011020 [31]                      1: disable streaming store
+// 0xC0011021 [5]                       1: disable op-cache
+//
+// #define MSR_AMD64_LS_CFG		0xc0011020
+// #define MSR_AMD64_DC_CFG		0xc0011022
+#define MSR_PERFBIAS0                   0xC0011020
+#define MSR_PERFBIAS1                   0xC0011021
+#define MSR_PERFBIAS2                   0xC0011022
 #define MSR_PERFBIAS3                   0xC001102B
 #define MSR_PERFBIAS4                   0xC001102D
 #define MSR_PERFBIAS5                   0xC0011093
+
+#define MSR_REG_VAL(r, v)               { r, { .ull = v } }
+#define MSR_REG_END                     { 0, { .ull = 0 } }
 
 union msr_val {
         struct {
@@ -99,6 +112,91 @@ union msr_val {
         } u;
         uint64_t ull;
 };
+
+struct msr_regval {
+        uint64_t reg;
+        union msr_val val;
+};
+
+struct msr_regval *perf_bias_msrs[NUM_PERF_BIAS] = {
+        [PERF_BIAS_NONE] = (struct msr_regval []) {
+                MSR_REG_VAL(MSR_PERFBIAS0, 0x0004400000000000),
+                MSR_REG_VAL(MSR_PERFBIAS1, 0x0004000000000040),
+                MSR_REG_VAL(MSR_PERFBIAS2, 0x8680000401500000),
+                MSR_REG_VAL(MSR_PERFBIAS3, 0x000000002040cc15),
+                MSR_REG_VAL(MSR_PERFBIAS4, 0x0000001800000000),
+                MSR_REG_VAL(MSR_PERFBIAS5, 0x000000006071f6ec),
+                MSR_REG_END,
+        },
+        [PERF_BIAS_CB23] = (struct msr_regval []) {
+                MSR_REG_VAL(MSR_PERFBIAS0, 0x0000000000000000),
+                MSR_REG_VAL(MSR_PERFBIAS1, 0x0004000000000040),
+                MSR_REG_VAL(MSR_PERFBIAS2, 0x8600000401500000),
+                MSR_REG_VAL(MSR_PERFBIAS3, 0x000000002040cc15),
+                MSR_REG_VAL(MSR_PERFBIAS4, 0x0000001800000000),
+                MSR_REG_VAL(MSR_PERFBIAS5, 0x000000006071f6ec),
+                MSR_REG_END,
+        },
+        [PERF_BIAS_GB3] = (struct msr_regval []) {
+                MSR_REG_VAL(MSR_PERFBIAS0, 0x0004400000000000),
+                MSR_REG_VAL(MSR_PERFBIAS1, 0x0000000000200002),
+                MSR_REG_VAL(MSR_PERFBIAS2, 0x8680000401500000),
+                MSR_REG_VAL(MSR_PERFBIAS3, 0x000000002040cc15),
+                MSR_REG_VAL(MSR_PERFBIAS4, 0x0000001800000000),
+                MSR_REG_VAL(MSR_PERFBIAS5, 0x000000006071f6ec),
+                MSR_REG_END,
+        },
+        // https://github.com/xmrig/xmrig/blob/master/scripts/randomx_boost.sh
+        [PERF_BIAS_RANDX] = (struct msr_regval []) {
+                MSR_REG_VAL(MSR_PERFBIAS0, 0x0004400000000000),
+                MSR_REG_VAL(MSR_PERFBIAS1, 0x0004000000000040),
+                MSR_REG_VAL(MSR_PERFBIAS2, 0x8680000401570000),
+                MSR_REG_VAL(MSR_PERFBIAS3, 0x000000002040cc10),
+                MSR_REG_END,
+        },
+};
+
+uint32_t cc6_enabled = 0;
+uint32_t pc6_enabled = 0;
+uint32_t cpb_enabled = 1;
+uint32_t perf_bias = PERF_BIAS_DEFAULT;
+
+const char *str_perf_bias[] = {
+        [PERF_BIAS_DEFAULT]     = "default",
+        [PERF_BIAS_NONE]        = "none",
+        [PERF_BIAS_CB23]        = "cb23",
+        [PERF_BIAS_GB3]         = "gb3",
+        [PERF_BIAS_RANDX]       = "randx",
+};
+
+int perf_bias_set(uint32_t bias)
+{
+        struct msr_regval *regval;
+
+        if (bias >= NUM_PERF_BIAS)
+                return -EINVAL;
+
+        // do nothing
+        if (bias == PERF_BIAS_DEFAULT)
+                return 0;
+
+        regval = perf_bias_msrs[bias];
+
+        if (!regval)
+                return -ENODATA;
+
+        for (size_t i = 0; regval[i].reg != 0x00; i++) {
+                for (uint32_t cpu = 0; cpu < nr_cpu; cpu++) {
+                        union msr_val *val = &regval[i].val;
+
+                        if (FALSE == WrmsrPx(regval[i].reg, val->u.eax, val->u.edx, BIT_ULL(cpu))) {
+                                return -EIO;
+                        }
+                }
+        }
+
+        return 0;
+}
 
 // only check CPU0
 int package_c6_get(void)

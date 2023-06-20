@@ -37,9 +37,6 @@ uint32_t nr_cpu;
 
 char json_path[PATH_MAX] = DEFAULT_JSON_PATH;
 uint32_t default_prefer = PREFER_CACHE;
-uint32_t cc6_enabled = 0;
-uint32_t pc6_enabled = 0;
-uint32_t cpb_enabled = 1;
 uint32_t restart_svc = 0;
 uint32_t restart_svc_force = 0;
 uint32_t autosave = 0;
@@ -79,7 +76,7 @@ static int usrcfg_root_key_create(jbuf_t *b)
                 void *settings = jbuf_obj_open(b, "settings");
 
                 {
-                        jbuf_strval_add(b, "default_prefer", &default_prefer, str_prefer, sizeof(str_prefer));
+                        jbuf_strval_add(b, "default_prefer", &default_prefer, str_prefer, ARRAY_SIZE(str_prefer));
                         jbuf_bool_add(b, "restart_service_on_apply", &restart_svc);
                         jbuf_bool_add(b, "restart_service_force", &restart_svc_force);
                         jbuf_bool_add(b, "autosave_on_exit", &autosave);
@@ -96,6 +93,7 @@ static int usrcfg_root_key_create(jbuf_t *b)
                         jbuf_bool_add(b, "pkg_c6_enabled", &pc6_enabled);
                         jbuf_bool_add(b, "core_c6_enabled", &cc6_enabled);
                         jbuf_bool_add(b, "cpb_enabled", &cpb_enabled);
+                        jbuf_strval_add(b, "perf_bias", &perf_bias, str_perf_bias, NUM_PERF_BIAS);
                 }
 
                 jbuf_obj_close(b, tweaks);
@@ -285,6 +283,9 @@ static void msr_apply(void)
         }
 
         package_c6_set(pc6_enabled);
+
+        pr_info("perf bias: %s\n", str_perf_bias[perf_bias]);
+        perf_bias_set(perf_bias);
 
         pr_info("msr tweaks applied\n");
 }

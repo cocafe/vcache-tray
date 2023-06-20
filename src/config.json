@@ -9,7 +9,8 @@
 	"tweaks" : {
 		"pkg_c6_enabled" : false,
 		"core_c6_enabled" : false,
-		"cpb_enabled" : true
+		"cpb_enabled" : true,
+		"perf_bias": "default"
 	},
 	"profiles" : [
 		{
