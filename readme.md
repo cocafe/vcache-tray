@@ -53,7 +53,7 @@ Tweaks will be applied again after S3/S4 resume.
  - `Core C6`: recommended disabling it to reduce freeze/shutter in gaming
    - disabled by default if `Meidum Load Boostit` enabled in BIOS
    - boost freq may be limited if multiple cores are activated at the same time without `Core C6` enabled, this may behave differently on various BIOS/CPU, please check on your platform.
- - `No C-state Timers`: some c-state features and timers will be disabled, with this tweak, tiny freezes/shutters in some games seems are eliminated
+ - `No C-state Timers`: some c-state features and timers will be disabled, with this tweak, it looks like tiny freezes/shutters in some games are eliminated
    - for more details, please check source code for what this tweak does
  - `CPB`: something like TurboBoost on blue brand
  - `Perf Bias`: some perf bias tweaks collected from Web and BIOS, may help in some specified workloads
