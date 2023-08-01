@@ -279,6 +279,23 @@ static void tray_perf_bias_click(struct tray_menu *m)
         perf_bias_set(perf_bias);
 }
 
+static void tray_cstate_timer_disable_click(struct tray_menu *m)
+{
+        uint32_t *no_timer = m->userdata;
+
+        *no_timer = !*no_timer;
+
+        if (*no_timer) {
+                for (int cpu = 0; cpu < (int)nr_cpu; cpu++) {
+                        int ret = cstate_timers_disable(cpu);
+                        if (ret < 0) {
+                                mb_err("Failed to write CPU%d", cpu);
+                                return;
+                        }
+                }
+        }
+}
+
 static struct tray g_tray = {
         .lbtn_dblclick = tray_double_click,
         .icon = {
@@ -304,6 +321,7 @@ static struct tray g_tray = {
                                 { .is_separator = 1 },
                                 { .name = L"Core C1E", .pre_show = tray_cc1e_update, .on_click = tray_cc1e_on_click, .userdata = &cc1e_enabled },
                                 { .name = L"Core C6", .pre_show = tray_cc6_update, .on_click = tray_cc6_on_click, .userdata = &cc6_enabled },
+                                { .name = L"No C-State Timers", .pre_show = tray_bool_item_update, .on_click = tray_cstate_timer_disable_click, .userdata = &cc6_enabled },
                                 { .is_separator = 1 },
                                 { .name = L"CPB", .pre_show = tray_cpb_update, .on_click = tray_cpb_on_click, .userdata = &cpb_enabled },
                                 {

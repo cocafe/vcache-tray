@@ -93,7 +93,7 @@
 #define MSR_HYST_TIMER_LEN              GENMASK_ULL(13, 9)
 #define MSR_HYST_TIMER_SEL              GENMASK_ULL(8, 7)
 #define MSR_CC1_TIMER_LEN               GENMASK_ULL(6, 2)
-#define MSR_CC1_TIMER_SEL               GENAMSK_ULL(1, 0)
+#define MSR_CC1_TIMER_SEL               GENMASK_ULL(1, 0)
 
 // Core C6
 // [22] CCR2_CC6EN
@@ -101,11 +101,17 @@
 // [6]  CCR0_CC6EN
 #define MSR_CSTATE_CONFIG               0xC0010296
 #define MSR_CCR2_CC1E_EN                BIT_ULL(55)
+#define MSR_CCR2_CFOH_TIMER_LEN         GENMASK_ULL(54, 48)
 #define MSR_CCR1_CC1E_EN                BIT_ULL(47)
+#define MSR_CCR1_CFOH_TIMER_LEN         GENMASK_ULL(46, 40)
 #define MSR_CCR0_CC1E_EN                BIT_ULL(39)
+#define MSR_CCR0_CFOH_TIMER_LEN         GENMASK_ULL(38, 32)
 #define MSR_CCR2_CC6_EN                 BIT_ULL(22)
+#define MSR_CCR2_CC2_DFSID              GENMASK_ULL(21, 16)     // ???
 #define MSR_CCR1_CC6_EN                 BIT_ULL(14)
+#define MSR_CCR1_CC1_DFSID              GENMASK_ULL(13, 8)      // ???
 #define MSR_CCR0_CC6_EN                 BIT_ULL(6)
+#define MSR_CCR0_CC1_DFSID              GENMASK_ULL(5, 0)       // ???
 
 #define MSR_CPPC_ENABLE                 0xC00102B1
 #define MSR_CPPC_EN                     BIT_ULL(1)      // WRITE-1
@@ -193,6 +199,7 @@ uint32_t cc1e_enabled = 0;
 uint32_t cc6_enabled = 0;
 uint32_t pc6_enabled = 0;
 uint32_t cpb_enabled = 1;
+uint32_t no_cstate_timers = 0;
 uint32_t perf_bias = PERF_BIAS_DEFAULT;
 
 const char *str_perf_bias[] = {
@@ -227,6 +234,59 @@ int perf_bias_set(uint32_t bias)
                                 return -EIO;
                         }
                 }
+        }
+
+        return 0;
+}
+
+int cstate_timers_disable(int cpu)
+{
+        union msr_val val = { 0 };
+        uint64_t cs_policy = MSR_CSTATE_CLT_EN |
+                             MSR_CSTATE_CIT_FASTSAMPLE |
+                             MSR_CSTATE_CIT_EN |
+                             MSR_IRM_MAX_DEPTH |
+                             MSR_IRM_THRS |
+                             MSR_IRM_BURST_LEN |
+                             MSR_IRM_DECR_RATE |
+                             MSR_CFSM_MISPRED_ACT |
+                             MSR_CFSM_THRS |
+                             MSR_CFSM_DURATION |
+                             MSR_C1E_TIMER_LEN |
+                             MSR_C1E_TIMER_SEL |
+                             MSR_CFOH_TIMER_SEL |
+                             MSR_CFOH_TIMER_LEN |
+                             MSR_HYST_TIMER_LEN |
+                             MSR_HYST_TIMER_SEL |
+                             MSR_CC1_TIMER_LEN |
+                             MSR_CC1_TIMER_SEL;
+        uint64_t cs_config = MSR_CCR2_CFOH_TIMER_LEN |
+                             MSR_CCR1_CFOH_TIMER_LEN |
+                             MSR_CCR0_CFOH_TIMER_LEN |
+                             MSR_CCR2_CC2_DFSID |
+                             MSR_CCR1_CC1_DFSID |
+                             MSR_CCR0_CC1_DFSID;
+
+        if (FALSE == RdmsrPx(MSR_CSTATE_POLICY, &val.u.eax, &val.u.edx, BIT_ULL(cpu))) {
+                return -EIO;
+        }
+
+        val.ull &= ~cs_policy;
+
+        if (FALSE == WrmsrPx(MSR_CSTATE_POLICY, val.u.eax, val.u.edx, BIT_ULL(cpu))) {
+                return -EIO;
+        }
+
+        memset(&val, 0, sizeof(val));
+
+        if (FALSE == RdmsrPx(MSR_CSTATE_CONFIG, &val.u.eax, &val.u.edx, BIT_ULL(cpu))) {
+                return -EIO;
+        }
+
+        val.ull &= ~cs_config;
+
+        if (FALSE == WrmsrPx(MSR_CSTATE_CONFIG, val.u.eax, val.u.edx, BIT_ULL(cpu))) {
+                return -EIO;
         }
 
         return 0;

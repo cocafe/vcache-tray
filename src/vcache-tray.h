@@ -23,6 +23,7 @@ extern uint32_t cc1e_enabled;
 extern uint32_t pc6_enabled;
 extern uint32_t cpb_enabled;
 extern uint32_t perf_bias;
+extern uint32_t no_cstate_timers;
 extern const char *str_perf_bias[];
 extern uint32_t no_tweaks;
 

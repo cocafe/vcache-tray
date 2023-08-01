@@ -94,6 +94,7 @@ static int usrcfg_root_key_create(jbuf_t *b)
                         jbuf_bool_add(b, "core_c1e_enabled", &cc1e_enabled);
                         jbuf_bool_add(b, "core_c6_enabled", &cc6_enabled);
                         jbuf_bool_add(b, "cpb_enabled", &cpb_enabled);
+                        jbuf_bool_add(b, "no_cstate_timers", &no_cstate_timers);
                         jbuf_strval_add(b, "perf_bias", &perf_bias, str_perf_bias, NUM_PERF_BIAS);
                 }
 
