@@ -90,6 +90,7 @@ static int usrcfg_root_key_create(jbuf_t *b)
                 void *tweaks = jbuf_obj_open(b, "tweaks");
 
                 {
+                        jbuf_bool_add(b, "no_tweaks", &no_tweaks);
                         jbuf_bool_add(b, "pkg_c6_enabled", &pc6_enabled);
                         jbuf_bool_add(b, "core_c1e_enabled", &cc1e_enabled);
                         jbuf_bool_add(b, "core_c6_enabled", &cc6_enabled);
