@@ -321,7 +321,7 @@ static struct tray g_tray = {
                                 { .is_separator = 1 },
                                 { .name = L"Core C1E", .pre_show = tray_cc1e_update, .on_click = tray_cc1e_on_click, .userdata = &cc1e_enabled },
                                 { .name = L"Core C6", .pre_show = tray_cc6_update, .on_click = tray_cc6_on_click, .userdata = &cc6_enabled },
-                                { .name = L"No C-State Timers", .pre_show = tray_bool_item_update, .on_click = tray_cstate_timer_disable_click, .userdata = &cc6_enabled },
+                                { .name = L"No C-State Timers", .pre_show = tray_bool_item_update, .on_click = tray_cstate_timer_disable_click, .userdata = &no_cstate_timers },
                                 { .is_separator = 1 },
                                 { .name = L"CPB", .pre_show = tray_cpb_update, .on_click = tray_cpb_on_click, .userdata = &cpb_enabled },
                                 {
