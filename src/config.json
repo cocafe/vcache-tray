@@ -7,10 +7,13 @@
 		"nk_theme" : 11
 	},
 	"tweaks" : {
+		"no_tweaks" : true,
 		"pkg_c6_enabled" : false,
+		"core_c1e_enabled" : false,
 		"core_c6_enabled" : false,
 		"cpb_enabled" : true,
-		"perf_bias": "default"
+		"no_cstate_timers" : false,
+		"perf_bias" : "default"
 	},
 	"profiles" : [
 		{
