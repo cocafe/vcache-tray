@@ -189,6 +189,7 @@ struct msr_regval *perf_bias_msrs[NUM_PERF_BIAS] = {
         },
 };
 
+uint32_t cc1e_enabled = 0;
 uint32_t cc6_enabled = 0;
 uint32_t pc6_enabled = 0;
 uint32_t cpb_enabled = 1;
@@ -260,6 +261,72 @@ int package_c6_set(int enable)
                 val.ull |= MSR_PMGT_MISC_PKGC6EN;
 
         if (FALSE == WrmsrPx(MSR_PMGT_MISC, val.u.eax, val.u.edx, 0x01)) {
+                return -EIO;
+        }
+
+        return 0;
+}
+
+int core_c1e_get(int cpu)
+{
+        union msr_val val = { 0 };
+        uint64_t c1e = MSR_C1E_EN;
+        uint64_t ccr_c1e = MSR_CCR2_CC1E_EN |
+                           MSR_CCR1_CC1E_EN |
+                           MSR_CCR0_CC1E_EN;
+
+        if (FALSE == RdmsrPx(MSR_CSTATE_POLICY, &val.u.eax, &val.u.edx, BIT_ULL(cpu))) {
+                return -EIO;
+        }
+
+        if (val.ull & c1e)
+                return 1;
+
+        memset(&val, 0, sizeof(val));
+
+        if (FALSE == RdmsrPx(MSR_CSTATE_CONFIG, &val.u.eax, &val.u.edx, BIT_ULL(cpu))) {
+                return -EIO;
+        }
+
+        if (val.ull & ccr_c1e)
+                return 1;
+
+        return 0;
+}
+
+int core_c1e_set(int cpu, int enable)
+{
+        union msr_val val = { 0 };
+        uint64_t c1e = MSR_C1E_EN;
+        uint64_t ccr_c1e = MSR_CCR2_CC1E_EN |
+                           MSR_CCR1_CC1E_EN |
+                           MSR_CCR0_CC1E_EN;
+
+        if (FALSE == RdmsrPx(MSR_CSTATE_POLICY, &val.u.eax, &val.u.edx, BIT_ULL(cpu))) {
+                return -EIO;
+        }
+
+        val.ull &= ~c1e;
+
+        if (enable)
+                val.ull |= c1e;
+
+        if (FALSE == WrmsrPx(MSR_CSTATE_POLICY, val.u.eax, val.u.edx, BIT_ULL(cpu))) {
+                return -EIO;
+        }
+
+        memset(&val, 0, sizeof(val));
+
+        if (FALSE == RdmsrPx(MSR_CSTATE_CONFIG, &val.u.eax, &val.u.edx, BIT_ULL(cpu))) {
+                return -EIO;
+        }
+
+        val.ull &= ~ccr_c1e;
+
+        if (enable)
+                val.ull |= ccr_c1e;
+
+        if (FALSE == WrmsrPx(MSR_CSTATE_CONFIG, val.u.eax, val.u.edx, BIT_ULL(cpu))) {
                 return -EIO;
         }
 

@@ -19,6 +19,7 @@ extern pthread_mutex_t profiles_lock;
 extern uint32_t g_should_exit;
 extern uint32_t nk_theme;
 extern uint32_t cc6_enabled;
+extern uint32_t cc1e_enabled;
 extern uint32_t pc6_enabled;
 extern uint32_t cpb_enabled;
 extern uint32_t perf_bias;

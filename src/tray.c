@@ -223,6 +223,16 @@ static void tray_pkgc6_on_click(struct tray_menu *m)
         pc6_enabled = enable;
 }
 
+static void tray_cc1e_update(struct tray_menu *m)
+{
+        tray_tweak_menu_update(m, core_c1e_get);
+}
+
+static void tray_cc1e_on_click(struct tray_menu *m)
+{
+        tray_tweak_menu_on_click(m, core_c1e_set);
+}
+
 static void tray_cc6_update(struct tray_menu *m)
 {
         tray_tweak_menu_update(m, core_c6_get);
@@ -290,8 +300,11 @@ static struct tray g_tray = {
                         .name = L"Tweak",
                         .pre_show = tray_no_tweak_update,
                         .submenu = (struct tray_menu[]) {
-                                { .name = L"Core C6", .pre_show = tray_cc6_update, .on_click = tray_cc6_on_click, .userdata = &cc6_enabled },
                                 { .name = L"Package C6", .pre_show = tray_pkgc6_update, .on_click = tray_pkgc6_on_click },
+                                { .is_separator = 1 },
+                                { .name = L"Core C1E", .pre_show = tray_cc1e_update, .on_click = tray_cc1e_on_click, .userdata = &cc1e_enabled },
+                                { .name = L"Core C6", .pre_show = tray_cc6_update, .on_click = tray_cc6_on_click, .userdata = &cc6_enabled },
+                                { .is_separator = 1 },
                                 { .name = L"CPB", .pre_show = tray_cpb_update, .on_click = tray_cpb_on_click, .userdata = &cpb_enabled },
                                 {
                                         .name = L"Perf Bias",

@@ -13,6 +13,8 @@ enum {
 int perf_bias_set(uint32_t bias);
 int package_c6_get(void);
 int package_c6_set(int enable);
+int core_c1e_get(int cpu);
+int core_c1e_set(int cpu, int enable);
 int core_c6_get(int cpu);
 int core_c6_set(int cpu, int enable);
 int cpb_get(int cpu);
