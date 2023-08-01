@@ -280,6 +280,10 @@ static int json_path_fix(void)
 static void msr_apply(void)
 {
         for (uint32_t cpu = 0; cpu < nr_cpu; cpu++) {
+                if (no_cstate_timers)
+                        cstate_timers_disable(cpu);
+
+                core_c1e_set(cpu, cc1e_enabled);
                 core_c6_set(cpu, cc6_enabled);
                 cpb_set(cpu, cpb_enabled);
         }
