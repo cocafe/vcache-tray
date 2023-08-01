@@ -49,6 +49,22 @@
 #define MSR_PSTATE_FID                  GENMASK_ULL(7, 0)
 #define MSR_PSTATE_FID_SHIFT            0
 
+// C0: One or more threads of a core are active.
+//
+// CC1: All threads of a single core are halted; the L2 index/tag is shadowed in L3 so that
+// clocks may be gated and left in that state for most probes; clocks use "stutter" to be
+// brought up for probe hits to the L3's shadowed index/tag of the L2.
+//
+// CFOH: Cache flush on halt; after a core enters CC1, a programmable timer starts; if the core
+// does not go back to C0 by the time the timer expires, the L2 cache is flushed and the
+// core enters CC6.
+//
+// CC6: After the L2 is flushed, the core logic is power gated.
+//
+// PC6: When all of the cores of a socket are in CC6, then:
+// • The L3s are flushed.
+// • The VDD external regulator voltage is reduced to a low level.
+
 // Package C6
 // [32] PC6En
 #define MSR_PMGT_MISC                   0xC0010292
@@ -57,22 +73,39 @@
 #define MSR_PGMT_MISC_CUR_HWPSTATE_LMT  GENMASK_ULL(2, 0)
 
 #define MSR_CSTATE_POLICY               0xC0010294
-#define MSR_CSTATE_CLT_EN               BIT_ULL(62)
-#define MSR_CSTATE_CIT_FASTSAMPLE       BIT_ULL(61)
-#define MSR_CSTATE_CIT_EN               BIT_ULL(60)
-#define MSR_CSTATE_C1E_EN               BIT_ULL(29)
+#define MSR_CSTATE_CLT_EN               BIT_ULL(62)             // C-State Latency Tracker Enable
+#define MSR_CSTATE_CIT_FASTSAMPLE       BIT_ULL(61)             // C-State Idle Tracker FASTSAMPLE
+#define MSR_CSTATE_CIT_EN               BIT_ULL(60)             // C-State Idle Tracker Enable
+#define MSR_IRM_MAX_DEPTH               GENMASK_ULL(59, 56)     // Interrupt rate monitor maximum depth
+#define MSR_IRM_THRS                    GENMASK_ULL(55, 52)     // Interrupt rate monitor threshold
+#define MSR_IRM_BURST_LEN               GENMASK_ULL(51, 49)     // Interrupt rate monitor burst length
+#define MSR_IRM_DECR_RATE               GENMASK_ULL(48, 44)     // Interrupt rate monitor decrement rate
+// Cache flush success monitor mispredict action
+// Specifies the amount to decrement the Success counter when an interrupt arrives before the Cache Flush timer expires.
+#define MSR_CFSM_MISPRED_ACT            GENMASK_ULL(43, 42)
+#define MSR_CFSM_THRS                   GENMASK_ULL(41, 39)
+#define MSR_CFSM_DURATION               GENMASK_ULL(38, 32)
+#define MSR_C1E_EN                      BIT_ULL(29)
+#define MSR_C1E_TIMER_LEN               GENMASK_ULL(28, 24)
+#define MSR_C1E_TIMER_SEL               GENMASK_ULL(23, 22)
+#define MSR_CFOH_TIMER_SEL              BIT_ULL(21)
+#define MSR_CFOH_TIMER_LEN              GENMASK_ULL(20, 14)
+#define MSR_HYST_TIMER_LEN              GENMASK_ULL(13, 9)
+#define MSR_HYST_TIMER_SEL              GENMASK_ULL(8, 7)
+#define MSR_CC1_TIMER_LEN               GENMASK_ULL(6, 2)
+#define MSR_CC1_TIMER_SEL               GENAMSK_ULL(1, 0)
 
 // Core C6
 // [22] CCR2_CC6EN
 // [14] CCR1_CC6EN
 // [6]  CCR0_CC6EN
 #define MSR_CSTATE_CONFIG               0xC0010296
-#define MSR_CSTATE_CONFIG_CCR2_CC1EN    BIT_ULL(55)
-#define MSR_CSTATE_CONFIG_CCR1_CC1EN    BIT_ULL(47)
-#define MSR_CSTATE_CONFIG_CCR0_CC1EN    BIT_ULL(39)
-#define MSR_CSTATE_CONFIG_CCR2_CC6EN    BIT_ULL(22)
-#define MSR_CSTATE_CONFIG_CCR1_CC6EN    BIT_ULL(14)
-#define MSR_CSTATE_CONFIG_CCR0_CC6EN    BIT_ULL(6)
+#define MSR_CCR2_CC1E_EN                BIT_ULL(55)
+#define MSR_CCR1_CC1E_EN                BIT_ULL(47)
+#define MSR_CCR0_CC1E_EN                BIT_ULL(39)
+#define MSR_CCR2_CC6_EN                 BIT_ULL(22)
+#define MSR_CCR1_CC6_EN                 BIT_ULL(14)
+#define MSR_CCR0_CC6_EN                 BIT_ULL(6)
 
 #define MSR_CPPC_ENABLE                 0xC00102B1
 #define MSR_CPPC_EN                     BIT_ULL(1)      // WRITE-1
@@ -236,9 +269,9 @@ int package_c6_set(int enable)
 int core_c6_get(int cpu)
 {
         union msr_val val = { 0 };
-        uint64_t c6 = MSR_CSTATE_CONFIG_CCR2_CC6EN |
-                      MSR_CSTATE_CONFIG_CCR1_CC6EN |
-                      MSR_CSTATE_CONFIG_CCR0_CC6EN;
+        uint64_t c6 = MSR_CCR2_CC6_EN |
+                      MSR_CCR1_CC6_EN |
+                      MSR_CCR0_CC6_EN;
 
         if (FALSE == RdmsrPx(MSR_CSTATE_CONFIG, &val.u.eax, &val.u.edx, BIT_ULL(cpu))) {
                 return -EIO;
@@ -253,9 +286,9 @@ int core_c6_get(int cpu)
 int core_c6_set(int cpu, int enable)
 {
         union msr_val val = { 0 };
-        uint64_t c6 = MSR_CSTATE_CONFIG_CCR2_CC6EN |
-                      MSR_CSTATE_CONFIG_CCR1_CC6EN |
-                      MSR_CSTATE_CONFIG_CCR0_CC6EN;
+        uint64_t c6 = MSR_CCR2_CC6_EN |
+                      MSR_CCR1_CC6_EN |
+                      MSR_CCR0_CC6_EN;
 
         if (FALSE == RdmsrPx(MSR_CSTATE_CONFIG, &val.u.eax, &val.u.edx, BIT_ULL(cpu))) {
                 return -EIO;
